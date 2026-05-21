@@ -1,0 +1,152 @@
+@model List<OrdemServico>
+@{
+    ViewData["Title"] = "Ordens";
+    var admin          = (bool)ViewBag.IsAdmin;
+    var busca          = (string?)ViewBag.Busca ?? "";
+    var statusFiltro   = (string?)ViewBag.StatusFiltro ?? "";
+    var local          = (string?)ViewBag.Local ?? "";
+    var ordemTempo     = (string?)ViewBag.OrdemTempo ?? "antigas";
+    var respId         = ViewBag.ResponsavelId as int?;
+    var locais         = (List<string>?)ViewBag.Locais ?? new List<string>();
+    var usuarios       = (List<Usuario>?)ViewBag.Usuarios ?? new List<Usuario>();
+    var page           = (int)ViewBag.Page;
+    var totalPaginas   = (int)ViewBag.TotalPaginas;
+    var totalRegistros = (int)ViewBag.TotalRegistros;
+    var filtroAtivo    = !string.IsNullOrEmpty(busca) || !string.IsNullOrEmpty(statusFiltro)
+                         || !string.IsNullOrEmpty(local) || respId.HasValue || ordemTempo == "recentes";
+}
+
+<div class="d-flex align-items-center gap-3 mb-3">
+    <a class="btn btn-outline-secondary btn-sm" href="javascript:history.back()">
+        <svg style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Voltar
+    </a>
+    <div>
+        <h1 class="h3 mb-0">Ordens de Serviço</h1>
+        <p class="text-muted mb-0" style="font-size:.88rem">
+            @totalRegistros resultado@(totalRegistros != 1 ? "s" : "")
+            @if (!string.IsNullOrEmpty(statusFiltro)) { <span>· @statusFiltro</span> }
+            @if (filtroAtivo) { <span>· filtro ativo</span> }
+        </p>
+    </div>
+    <a class="btn btn-primary btn-lg ms-auto" asp-action="Abrir">
+        <span class="d-flex align-items-center gap-2">
+            <svg class="button-icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            Abrir OS
+        </span>
+    </a>
+</div>
+
+<form method="get" class="filter-bar mb-3">
+    @* Busca *@
+    <div class="filter-field" style="flex:2 1 220px">
+        <label>Buscar equipamento / NI</label>
+        <div class="input-group">
+            <span class="input-group-text bg-white border-end-0">
+                <svg style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            </span>
+            <input class="form-control border-start-0" name="busca" value="@busca" placeholder="Nome ou NI do ativo" />
+        </div>
+    </div>
+
+    @* Status *@
+    <div class="filter-field">
+        <label>Status</label>
+        <select class="form-select" name="status">
+            <option value="">Todos (exceto Concluída)</option>
+            <option value="Pendente"    selected="@(statusFiltro == "Pendente")">Pendente</option>
+            <option value="Em Execucao" selected="@(statusFiltro == "Em Execucao")">Em Execução</option>
+            <option value="Aguardando"  selected="@(statusFiltro == "Aguardando")">Aguardando</option>
+            <option value="Concluida"   selected="@(statusFiltro == "Concluida")">Concluída</option>
+        </select>
+    </div>
+
+    @* Localização *@
+    <div class="filter-field">
+        <label>Localização</label>
+        <select class="form-select" name="local">
+            <option value="">Todas</option>
+            @foreach (var loc in locais)
+            {
+                <option value="@loc" selected="@(local == loc)">@loc</option>
+            }
+        </select>
+    </div>
+
+    @* Responsável *@
+    @if (admin)
+    {
+        <div class="filter-field">
+            <label>Responsável</label>
+            <select class="form-select" name="responsavelId">
+                <option value="">Todos</option>
+                @foreach (var u in usuarios)
+                {
+                    <option value="@u.Id" selected="@(respId == u.Id)">@u.Nome</option>
+                }
+            </select>
+        </div>
+    }
+
+    @* Ordenação por data *@
+    <div class="filter-field">
+        <label>Ordenar por data</label>
+        <select class="form-select" name="ordemTempo">
+            <option value="antigas"  selected="@(ordemTempo == "antigas" || string.IsNullOrEmpty(ordemTempo))">Mais antigas primeiro</option>
+            <option value="recentes" selected="@(ordemTempo == "recentes")">Mais recentes primeiro</option>
+        </select>
+    </div>
+
+    <div class="d-flex gap-2 align-items-end">
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+        @if (filtroAtivo)
+        {
+            <a class="btn btn-outline-secondary" asp-action="Index">Limpar</a>
+        }
+    </div>
+</form>
+
+<partial name="_OrdensLista" model="Model" />
+
+@* Paginação *@
+@if (totalPaginas > 1)
+{
+    <div class="pagination-bar mt-3">
+        <span>Página @(page) de @(totalPaginas)</span>
+        <div class="d-flex gap-2">
+            @if (page > 1)
+            {
+                <a class="btn btn-outline-secondary btn-sm"
+                   asp-action="Index"
+                   asp-route-busca="@busca"
+                   asp-route-status="@statusFiltro"
+                   asp-route-local="@local"
+                   asp-route-responsavelId="@respId"
+                   asp-route-ordemTempo="@ordemTempo"
+                   asp-route-page="@(page - 1)">← Anterior</a>
+            }
+            @for (int p = Math.Max(1, page - 2); p <= Math.Min(totalPaginas, page + 2); p++)
+            {
+                <a class="btn btn-sm @(p == page ? "btn-primary" : "btn-outline-secondary")"
+                   asp-action="Index"
+                   asp-route-busca="@busca"
+                   asp-route-status="@statusFiltro"
+                   asp-route-local="@local"
+                   asp-route-responsavelId="@respId"
+                   asp-route-ordemTempo="@ordemTempo"
+                   asp-route-page="@p">@p</a>
+            }
+            @if (page < totalPaginas)
+            {
+                <a class="btn btn-outline-secondary btn-sm"
+                   asp-action="Index"
+                   asp-route-busca="@busca"
+                   asp-route-status="@statusFiltro"
+                   asp-route-local="@local"
+                   asp-route-responsavelId="@respId"
+                   asp-route-ordemTempo="@ordemTempo"
+                   asp-route-page="@(page + 1)">Próxima →</a>
+            }
+        </div>
+    </div>
+}

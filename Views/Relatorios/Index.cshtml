@@ -1,0 +1,332 @@
+@model List<OrdemServico>
+@{
+    ViewData["Title"] = "Relatórios";
+    var usuarios  = (List<Usuario>)ViewBag.Usuarios;
+    var vinculos  = (List<string>)ViewBag.Vinculos;
+    var horasLiq  = (TimeSpan)ViewBag.HorasLiquidas;
+    var mttr      = (TimeSpan)ViewBag.Mttr;
+
+    string Fmt(TimeSpan t) => $"{(int)t.TotalHours:00}h{t.Minutes:00}";
+    string FmtH(double h)
+    {
+        var total = TimeSpan.FromHours(h);
+        return $"{(int)total.TotalHours:00}h{total.Minutes:00}";
+    }
+
+    // Período formatado para exibir no cabeçalho
+    var periodoLabel = "";
+    if (!string.IsNullOrEmpty(ViewBag.FiltroInicio as string) || !string.IsNullOrEmpty(ViewBag.FiltroFim as string))
+    {
+        periodoLabel = $"{((string?)ViewBag.FiltroInicio ?? "—")} a {((string?)ViewBag.FiltroFim ?? "—")}";
+    }
+}
+
+<div class="d-flex align-items-center gap-3 mb-4">
+    <a class="btn btn-outline-secondary btn-sm" href="javascript:history.back()">
+        <svg style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Voltar
+    </a>
+    <div>
+        <h1 class="h3 mb-0">Relatórios</h1>
+        @if (!string.IsNullOrEmpty(periodoLabel))
+        {
+            <p class="text-muted mb-0" style="font-size:.88rem">Período: @periodoLabel · @Model.Count OS</p>
+        }
+    </div>
+</div>
+
+@* ── Filtros ─────────────────────────────────────────────────────── *@
+<form method="get" class="form-surface mb-4">
+    <div class="row g-3">
+        <div class="col-12 col-sm-6 col-lg-2">
+            <label class="form-label">Data inicial</label>
+            <input class="form-control" type="date" name="inicio" value="@ViewBag.FiltroInicio" />
+        </div>
+        <div class="col-12 col-sm-6 col-lg-2">
+            <label class="form-label">Data final</label>
+            <input class="form-control" type="date" name="fim" value="@ViewBag.FiltroFim" />
+        </div>
+        <div class="col-12 col-sm-6 col-lg-2">
+            <label class="form-label">Status</label>
+            <select class="form-select" name="status">
+                <option value="">Todos</option>
+                <option value="Pendente"    selected="@(ViewBag.FiltroStatus == "Pendente")">Pendente</option>
+                <option value="Em Execucao" selected="@(ViewBag.FiltroStatus == "Em Execucao")">Em Execução</option>
+                <option value="Aguardando"  selected="@(ViewBag.FiltroStatus == "Aguardando")">Aguardando</option>
+                <option value="Concluida"   selected="@(ViewBag.FiltroStatus == "Concluida")">Concluída</option>
+            </select>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+            <label class="form-label">Responsável</label>
+            <select class="form-select" name="responsavelId">
+                <option value="">Todos</option>
+                @foreach (var u in usuarios)
+                {
+                    <option value="@u.Id" selected="@(ViewBag.FiltroResponsavel != null && (int)ViewBag.FiltroResponsavel == u.Id)">@u.Nome</option>
+                }
+            </select>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-2">
+            <label class="form-label">Vínculo</label>
+            <select class="form-select" name="vinculo">
+                <option value="">Todos</option>
+                @foreach (var v in vinculos)
+                {
+                    <option value="@v" selected="@(ViewBag.FiltroVinculo == v)">@v</option>
+                }
+            </select>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-1 d-flex align-items-end">
+            <button class="btn btn-primary w-100">Filtrar</button>
+        </div>
+    </div>
+</form>
+
+@* ── KPI Cards ────────────────────────────────────────────────────── *@
+<div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="metric">
+            <div class="metric-icon">
+                <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/></svg>
+            </div>
+            <div><span>OS Abertas</span><strong>@ViewBag.TotalAbertas</strong><span>No período</span></div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="metric success">
+            <div class="metric-icon metric-icon-ok">
+                <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>
+            </div>
+            <div><span>Concluídas</span><strong>@ViewBag.TotalConcluidas</strong><span>Chamados fechados</span></div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="metric">
+            <div class="metric-icon metric-icon-exec">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            </div>
+            <div><span>Horas Líquidas</span><strong>@Fmt(horasLiq)</strong><span>Só em execução</span></div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="metric">
+            <div class="metric-icon metric-icon-warn">
+                <svg viewBox="0 0 24 24"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
+            </div>
+            <div><span>MTTR Médio</span><strong>@(mttr > TimeSpan.Zero ? Fmt(mttr) : "—")</strong><span>Tempo médio de reparo</span></div>
+        </div>
+    </div>
+</div>
+
+@* ── Gráficos ─────────────────────────────────────────────────────── *@
+@if (Model.Any())
+{
+    <div class="row g-4">
+
+        @* Gráfico 1: Laboratórios com mais falhas *@
+        <div class="col-12 col-lg-6">
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 15v-4M12 15V8M16 15v-2"/></svg>
+                    Laboratórios com Mais Falhas
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="chartLabs"></canvas>
+                </div>
+            </div>
+        </div>
+
+        @* Gráfico 2: Horas por Vínculo *@
+        <div class="col-12 col-lg-6">
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+                    Distribuição de Horas por Vínculo
+                </div>
+                <div class="chart-wrap chart-wrap-donut">
+                    <canvas id="chartVinculo"></canvas>
+                </div>
+            </div>
+        </div>
+
+        @* Gráfico 3: Horas + tabela por responsável *@
+        <div class="col-12 col-lg-6">
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    Horas Dedicadas por Responsável
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="chartResp"></canvas>
+                </div>
+                @{
+                    dynamic respStats = ViewBag.RespStats;
+                }
+                @if (respStats != null)
+                {
+                    <div class="table-responsive mt-3">
+                        <table class="table table-sm align-middle mb-0" style="font-size:.84rem">
+                            <thead style="background:#f6f8fb">
+                                <tr>
+                                    <th>Responsável</th>
+                                    <th class="text-center">OS Concluídas</th>
+                                    <th class="text-end">Média h/OS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var r in respStats)
+                                {
+                                    <tr>
+                                        <td>@r.nome</td>
+                                        <td class="text-center"><strong>@r.osConcluidas</strong></td>
+                                        <td class="text-end text-muted">@FmtH((double)r.mediaHoras)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+
+        @* Gráfico 4: Ativos (NI) com mais recorrência *@
+        <div class="col-12 col-lg-6">
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                    Ativos com Mais Recorrência (NI)
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="chartAtivos"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+}
+else
+{
+    <div class="empty-state">
+        <svg style="width:36px;height:36px;fill:none;stroke:#9ca3af;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;display:block;margin:0 auto .6rem" viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 15v-4M12 15V8M16 15v-2"/></svg>
+        Nenhuma OS no período. Ajuste os filtros para ver dados.
+    </div>
+}
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    var cores      = ['#0b4ecf','#166534','#d97706','#dc2626','#6366f1','#0891b2','#7c3aed','#059669'];
+    var coresDonut = ['#0b4ecf','#166534','#d97706','#dc2626','#6366f1','#0891b2'];
+
+    function horasLabel(h) {
+        var total = Math.round(h * 60);
+        return Math.floor(total/60) + 'h' + String(total%60).padStart(2,'0');
+    }
+
+    Chart.defaults.font.family = '"Segoe UI", Arial, sans-serif';
+    Chart.defaults.font.size   = 12;
+    Chart.defaults.color       = '#637199';
+
+    // ── Chart 1: Laboratórios com mais falhas (barras verticais) ──
+    var labs = @Html.Raw(ViewBag.ChartLabsJson ?? "[]");
+    if (labs.length) {
+        new Chart(document.getElementById('chartLabs'), {
+            type: 'bar',
+            data: {
+                labels: labs.map(d => d.local),
+                datasets: [{
+                    label: 'Nº de OS',
+                    data: labs.map(d => d.count),
+                    backgroundColor: cores.slice(0, labs.length),
+                    borderRadius: 5, borderSkipped: false
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#e9eef5' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    // ── Chart 2: Horas por vínculo (donut) ────────────────────────
+    var vinculo = @Html.Raw(ViewBag.ChartVinculoJson ?? "[]");
+    if (vinculo.length) {
+        new Chart(document.getElementById('chartVinculo'), {
+            type: 'doughnut',
+            data: {
+                labels: vinculo.map(d => d.vinculo),
+                datasets: [{
+                    data: vinculo.map(d => Math.round(d.horas * 100) / 100),
+                    backgroundColor: coresDonut.slice(0, vinculo.length),
+                    borderWidth: 2, borderColor: '#fff'
+                }]
+            },
+            options: {
+                cutout: '62%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { padding: 16 } },
+                    tooltip: { callbacks: { label: ctx => ' ' + horasLabel(ctx.parsed) + ' (' + ctx.label + ')' } }
+                }
+            }
+        });
+    }
+
+    // ── Chart 3: Horas por responsável (barras horizontais) ───────
+    var resp = @Html.Raw(ViewBag.ChartRespJson ?? "[]");
+    if (resp.length) {
+        new Chart(document.getElementById('chartResp'), {
+            type: 'bar',
+            data: {
+                labels: resp.map(d => d.nome),
+                datasets: [{
+                    label: 'Horas líquidas',
+                    data: resp.map(d => Math.round(d.horas * 100) / 100),
+                    backgroundColor: cores.slice(0, resp.length),
+                    borderRadius: 5, borderSkipped: false
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: ctx => ' ' + horasLabel(ctx.parsed.x) } }
+                },
+                scales: {
+                    x: { beginAtZero: true, ticks: { callback: v => horasLabel(v) }, grid: { color: '#e9eef5' } },
+                    y: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    // ── Chart 4: Ativos NI com mais recorrência (barras horiz) ────
+    var ativos = @Html.Raw(ViewBag.ChartAtivosJson ?? "[]");
+    if (ativos.length) {
+        new Chart(document.getElementById('chartAtivos'), {
+            type: 'bar',
+            data: {
+                labels: ativos.map(d => d.ativo),
+                datasets: [{
+                    label: 'Nº de OS',
+                    data: ativos.map(d => d.count),
+                    backgroundColor: cores.slice(0, ativos.length),
+                    borderRadius: 5, borderSkipped: false
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#e9eef5' } },
+                    y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+                }
+            }
+        });
+    }
+}());
+</script>
+}

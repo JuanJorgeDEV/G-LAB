@@ -1,0 +1,202 @@
+@{
+    ViewData["Title"] = "Nova OS";
+}
+
+<div class="mb-3">
+    <a class="btn btn-outline-secondary btn-sm" href="javascript:history.back()">
+        <svg style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Voltar
+    </a>
+</div>
+
+<section class="page-card">
+    <div class="page-heading">
+        <h1>Nova OS</h1>
+        <p>Informe o NI do ativo para abrir uma nova Ordem de Serviço.</p>
+    </div>
+
+    <form asp-action="Salvar" method="post" id="osForm">
+        <input type="hidden" name="euMesmoVouExecutar" id="euMesmoVouExecutar" value="false" />
+        <input type="hidden" name="possuiNI" id="possuiNIValue" value="true" />
+
+        <section class="mb-4">
+            <div class="row g-3 align-items-end mb-3">
+                <div class="col-12 col-lg-5">
+                    <label class="form-label">NI do Ativo</label>
+                    <input class="form-control form-control-lg" name="ni" id="niInput" placeholder="Ex: 2026-001" />
+                </div>
+                <div class="col-12 col-sm-auto">
+                    <button class="btn btn-primary btn-lg px-4 w-100" type="button" id="buscarNI" aria-label="Buscar equipamento por NI">
+                        <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.3-4.3M10.8 18a7.2 7.2 0 1 1 0-14.4 7.2 7.2 0 0 1 0 14.4z" /></svg>
+                    </button>
+                </div>
+                <div class="col-12">
+                    <div class="equipment-result d-none" id="equipamentoEncontrado"></div>
+                    <div class="alert alert-warning d-none mt-2" id="avisoOsAberta" role="alert">
+                        <svg style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle;margin-right:.4rem" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01"/></svg>
+                        <strong>Este ativo já possui uma OS em aberto:</strong>
+                        <span id="avisoOsAbertaTexto"></span>
+                        — <a id="avisoOsAbertaLink" href="#" class="alert-link">Ver OS</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input" id="ativoNaoRegistrado" />
+                <label class="form-check-label fw-bold" for="ativoNaoRegistrado">Não sei o NI ou o ativo não está registrado</label>
+            </div>
+            <p class="text-muted ms-4 mb-0">Ao marcar esta opção, preencha manualmente os dados do ativo abaixo.</p>
+        </section>
+
+        <section class="detail-panel mb-4">
+            <h2 class="h5 mb-3">Dados do Ativo <span class="text-muted fw-normal">(automáticos ou preenchidos manualmente)</span></h2>
+            <div class="row g-3">
+                <div class="col-12 col-lg-4">
+                    <label class="form-label">Ativo</label>
+                    <input class="form-control asset-field" id="ativoNome" name="nomeEquipamento" readonly />
+                </div>
+                <div class="col-12 col-lg-4">
+                    <label class="form-label">Localização</label>
+                    <input class="form-control asset-field" id="ativoLocal" name="localizacao" readonly />
+                </div>
+                <div class="col-12 col-lg-4">
+                    <label class="form-label">Vínculo</label>
+                    <select class="form-select asset-field" id="ativoVinculo" name="vinculo" disabled>
+                        <option value="">Não informado</option>
+                        <option>Aprendizagem</option>
+                        <option>FIC</option>
+                        <option>Outro</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="row g-3">
+                <div class="col-12 col-lg-5">
+                    <label class="form-label">Tipo do problema, se souber</label>
+                    <input class="form-control form-control-lg" name="tipoProblema" list="tiposProblema" placeholder="Digite ou escolha uma sugestão" />
+                    <datalist id="tiposProblema">
+                        <option value="Não liga"></option>
+                        <option value="Mau funcionamento"></option>
+                        <option value="Cabo/conexão"></option>
+                        <option value="Peça quebrada"></option>
+                        <option value="Falta de material"></option>
+                        <option value="Limpeza/organização"></option>
+                    </datalist>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Descrição do problema</label>
+                    <textarea class="form-control form-control-lg" name="descricaoProblema" rows="6" required placeholder="Ex: O projetor não liga quando aperta o botão."></textarea>
+                </div>
+            </div>
+        </section>
+
+        <div class="d-flex flex-column flex-md-row justify-content-end gap-3 mt-4">
+            <a class="btn btn-outline-primary btn-lg px-5" asp-controller="Home" asp-action="Index">Cancelar</a>
+            <button class="btn btn-primary btn-lg px-5" type="button" data-bs-toggle="modal" data-bs-target="#decisaoModal">Registrar OS</button>
+        </div>
+    </form>
+</section>
+
+<div class="modal fade" id="decisaoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body text-center px-4 pb-4">
+                <h2 class="modal-title h4 mb-3">Você vai realizar esta manutenção?</h2>
+                <p class="text-muted mb-4">Escolha se você mesmo será o responsável pela execução desta Ordem de Serviço.</p>
+                <div class="row g-3">
+                    <div class="col-12 col-sm-6">
+                        <button class="btn btn-primary btn-lg w-100" type="button" onclick="enviarOS(true)">Sim</button>
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <button class="btn btn-outline-primary btn-lg w-100" type="button" onclick="enviarOS(false)">Não</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const ativoNaoRegistrado = document.getElementById('ativoNaoRegistrado');
+        const possuiNIValue = document.getElementById('possuiNIValue');
+        const niInput = document.getElementById('niInput');
+        const buscarNI = document.getElementById('buscarNI');
+        const ativoNome = document.getElementById('ativoNome');
+        const ativoLocal = document.getElementById('ativoLocal');
+        const ativoVinculo = document.getElementById('ativoVinculo');
+
+        function aplicarModoManual(manual) {
+            possuiNIValue.value = manual ? 'false' : 'true';
+            buscarNI.disabled = manual;
+            niInput.placeholder = manual ? 'NI não informado' : 'Ex: 2026-001';
+            ativoNome.readOnly = !manual;
+            ativoLocal.readOnly = !manual;
+            ativoVinculo.disabled = !manual;
+
+            if (manual) {
+                niInput.value = '';
+                ativoNome.value = '';
+                ativoLocal.value = '';
+                ativoVinculo.value = '';
+                document.getElementById('equipamentoEncontrado').classList.add('d-none');
+                ativoNome.focus();
+            }
+        }
+
+        ativoNaoRegistrado.addEventListener('change', () => {
+            aplicarModoManual(ativoNaoRegistrado.checked);
+        });
+
+        const btnRegistrar = document.querySelector('[data-bs-target="#decisaoModal"]');
+        const avisoOsAberta = document.getElementById('avisoOsAberta');
+        const avisoTexto = document.getElementById('avisoOsAbertaTexto');
+        const avisoLink = document.getElementById('avisoOsAbertaLink');
+
+        function limparAvisoOS() {
+            avisoOsAberta.classList.add('d-none');
+            btnRegistrar.disabled = false;
+        }
+
+        document.getElementById('buscarNI').addEventListener('click', async () => {
+            const ni = niInput.value.trim();
+            if (!ni) return;
+            const box = document.getElementById('equipamentoEncontrado');
+            limparAvisoOS();
+            box.classList.remove('d-none');
+            const resposta = await fetch(`/Equipamentos/BuscarPorNI?ni=${encodeURIComponent(ni)}`);
+            if (!resposta.ok) {
+                box.innerHTML = '<strong>Equipamento não encontrado.</strong> Verifique o NI ou marque a opção abaixo.';
+                ativoNome.value = '';
+                ativoLocal.value = '';
+                ativoVinculo.value = '';
+                return;
+            }
+            const equipamento = await resposta.json();
+            ativoNome.value = equipamento.nome ?? '';
+            ativoLocal.value = equipamento.localizacao ?? '';
+            ativoVinculo.disabled = false;
+            ativoVinculo.value = equipamento.vinculo ?? '';
+            ativoVinculo.disabled = true;
+            box.innerHTML = `<strong>Equipamento encontrado:</strong> ${equipamento.nome}`;
+
+            if (equipamento.osAberta) {
+                const statusLabel = { 'Em Execucao': 'Em Execução', 'Aguardando': 'Aguardando', 'Pendente': 'Pendente' };
+                avisoTexto.textContent = `OS #${equipamento.osAbertaId} · ${statusLabel[equipamento.osAbertaStatus] ?? equipamento.osAbertaStatus}`;
+                avisoLink.href = `/OrdensServico/Detalhes/${equipamento.osAbertaId}`;
+                avisoOsAberta.classList.remove('d-none');
+                btnRegistrar.disabled = true;
+            }
+        });
+
+        function enviarOS(euMesmo) {
+            document.getElementById('euMesmoVouExecutar').value = euMesmo ? 'true' : 'false';
+            document.getElementById('osForm').submit();
+        }
+    </script>
+}

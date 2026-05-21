@@ -1,0 +1,156 @@
+@model List<OrdemServico>
+@{
+    var sessionPerfil  = Context.Session.GetString("UsuarioPerfil");
+    var sessionId      = Context.Session.GetString("UsuarioId");
+    var isAdmin        = sessionPerfil == "Administrador";
+    int.TryParse(sessionId, out var usuarioId);
+
+    // Mapa opcional de tempos: só existe quando passado pelo controller
+    var temposRaw = ViewBag.TemposPorOS as Dictionary<int, (TimeSpan Tempo, bool Ativo)>;
+
+    string StatusClass(string s) => s switch
+    {
+        "Em Execucao" => "status-execucao",
+        "Aguardando"  => "status-aguardando",
+        "Concluida"   => "status-concluida",
+        _             => "status-pendente"
+    };
+
+    string StatusLabel(string s) => s switch
+    {
+        "Em Execucao" => "Em Execução",
+        "Concluida"   => "Concluída",
+        _             => s
+    };
+
+    string FormatarTempo(TimeSpan t)
+    {
+        var h = (int)t.TotalHours;
+        return $"{h:00}h{t.Minutes:00}";
+    }
+}
+
+@if (!Model.Any())
+{
+    <div class="empty-state">
+        <svg style="width:32px;height:32px;fill:none;stroke:#9ca3af;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;display:block;margin:0 auto .5rem" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/></svg>
+        Nenhuma ordem encontrada.
+    </div>
+}
+else
+{
+    <div class="table-responsive d-none d-md-block">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>OS</th>
+                    <th>Equipamento</th>
+                    <th>Localização</th>
+                    <th>Responsável</th>
+                    <th>Tempo</th>
+                    <th>Abertura</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    var info = temposRaw != null && temposRaw.TryGetValue(item.Id, out var t) ? t : default;
+                    var timerAtivo = info.Ativo;
+                    var tempoAcum  = info.Tempo;
+                    var responsavelDaOS = item.ResponsavelId == usuarioId;
+
+                    var rowCss = item.Status == "Em Execucao" ? "row-execucao"
+                                 : timerAtivo ? "row-timer-ativo" : "";
+                    <tr class="@rowCss">
+                        <td>
+                            <strong>OS@(item.DataAbertura.ToLocalTime().Year)-@item.Id.ToString("000000")</strong>
+                            @if (timerAtivo)
+                            {
+                                <br/><span class="badge-timer-ativo">● rodando</span>
+                            }
+                        </td>
+                        <td>
+                            @item.Equipamento.Nome
+                            @if (!string.IsNullOrWhiteSpace(item.Equipamento.NI))
+                            {
+                                <br/><small class="text-muted">NI: @item.Equipamento.NI</small>
+                            }
+                        </td>
+                        <td>@item.Equipamento.Localizacao</td>
+                        <td>@(item.Responsavel?.Nome ?? "—")</td>
+                        <td style="white-space:nowrap;font-size:.88rem">
+                            @if (temposRaw != null)
+                            {
+                                if (timerAtivo)
+                                {
+                                    <span class="badge-timer-ativo">@FormatarTempo(tempoAcum)</span>
+                                }
+                                else if (tempoAcum > TimeSpan.Zero)
+                                {
+                                    <span class="text-muted">@FormatarTempo(tempoAcum)</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            }
+                        </td>
+                        <td class="text-muted" style="font-size:.86rem;white-space:nowrap">@item.DataAbertura.ToLocalTime().ToString("dd/MM/yy HH:mm")</td>
+                        <td><span class="status-pill @StatusClass(item.Status)">@StatusLabel(item.Status)</span></td>
+                        <td class="text-end" style="white-space:nowrap">
+                            @if (isAdmin && item.Status == "Pendente")
+                            {
+                                <a class="btn btn-sm btn-primary me-1" asp-controller="OrdensServico" asp-action="Designar" asp-route-id="@item.Id">Designar</a>
+                            }
+                            @if (responsavelDaOS && item.Status != "Concluida")
+                            {
+                                <a class="btn btn-sm btn-success me-1" asp-controller="Execucao" asp-action="Detalhes" asp-route-id="@item.Id">Abrir Execução</a>
+                            }
+                            <a class="btn btn-sm btn-outline-primary" asp-controller="OrdensServico" asp-action="Detalhes" asp-route-id="@item.Id">Detalhes</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mobile-list d-md-none">
+        @foreach (var item in Model)
+        {
+            var info = temposRaw != null && temposRaw.TryGetValue(item.Id, out var t) ? t : default;
+            var timerAtivo = info.Ativo;
+            var tempoAcum  = info.Tempo;
+            var responsavelDaOS = item.ResponsavelId == usuarioId;
+
+            var cardCss = item.Status == "Em Execucao" ? "mobile-card-execucao"
+                          : timerAtivo ? "mobile-card-ativo" : "";
+            <div class="mobile-card @cardCss">
+                <div class="d-flex justify-content-between gap-2">
+                    <div>
+                        <strong>OS@(item.DataAbertura.ToLocalTime().Year)-@item.Id.ToString("000000")</strong>
+                        @if (timerAtivo)
+                        {
+                            <span class="badge-timer-ativo ms-1">● @FormatarTempo(tempoAcum)</span>
+                        }
+                    </div>
+                    <span class="status-pill @StatusClass(item.Status)">@StatusLabel(item.Status)</span>
+                </div>
+                <div>@item.Equipamento.Nome</div>
+                <small>@item.Equipamento.Localizacao · @item.DataAbertura.ToLocalTime().ToString("dd/MM HH:mm")</small>
+                <div class="d-flex gap-2 mt-2 flex-wrap">
+                    @if (isAdmin && item.Status == "Pendente")
+                    {
+                        <a class="btn btn-primary btn-sm flex-fill" asp-controller="OrdensServico" asp-action="Designar" asp-route-id="@item.Id">Designar</a>
+                    }
+                    @if (responsavelDaOS && item.Status != "Concluida")
+                    {
+                        <a class="btn btn-success btn-sm flex-fill" asp-controller="Execucao" asp-action="Detalhes" asp-route-id="@item.Id">Abrir Execução</a>
+                    }
+                    <a class="btn btn-outline-primary btn-sm flex-fill" asp-controller="OrdensServico" asp-action="Detalhes" asp-route-id="@item.Id">Detalhes</a>
+                </div>
+            </div>
+        }
+    </div>
+}

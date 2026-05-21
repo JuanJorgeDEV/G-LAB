@@ -1,0 +1,33 @@
+@model OrdemServico
+@{
+    ViewData["Title"] = "Designar responsavel";
+    var usuarios = (List<Usuario>)ViewBag.Usuarios;
+}
+
+<div class="mb-3">
+    <a class="btn btn-outline-secondary btn-sm" href="javascript:history.back()">
+        <svg style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Voltar
+    </a>
+</div>
+<h1 class="h3 mb-4">Designar responsavel</h1>
+
+<div class="detail-panel mb-3">
+    <strong>OS #@Model.Id - @Model.Equipamento.Nome</strong>
+    <div class="text-muted">@Model.Equipamento.Localizacao</div>
+</div>
+
+<form asp-action="SalvarDesignacao" method="post" class="form-surface">
+    <input type="hidden" name="id" value="@Model.Id" />
+    <label class="form-label">Escolha o responsavel</label>
+    <select class="form-select form-select-lg" name="responsavelId" required>
+        @foreach (var usuario in usuarios)
+        {
+            <option value="@usuario.Id">@usuario.Nome (@usuario.Perfil)</option>
+        }
+    </select>
+    <div class="d-flex flex-column flex-md-row gap-2 mt-4">
+        <button class="btn btn-primary btn-lg">Salvar</button>
+        <a class="btn btn-outline-secondary btn-lg" asp-action="Index">Voltar</a>
+    </div>
+</form>

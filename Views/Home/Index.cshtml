@@ -1,0 +1,395 @@
+@{
+    var admin        = (string)ViewBag.UsuarioPerfil == "Administrador";
+    var statusFiltro = (string?)ViewBag.StatusFiltro ?? "";
+    ViewData["Title"] = admin ? "Página Inicial" : "Minhas OS";
+
+    string StatusClass(string s) => s switch
+    {
+        "Em Execucao" => "status-execucao",
+        "Aguardando"  => "status-aguardando",
+        "Concluida"   => "status-concluida",
+        _             => "status-pendente"
+    };
+    string StatusLabel(string s) => s switch
+    {
+        "Em Execucao" => "Em Execução",
+        "Concluida"   => "Concluída",
+        _             => s
+    };
+    string FormatarTempo(TimeSpan t) => $"{(int)t.TotalHours:00}h{t.Minutes:00}";
+}
+
+@* ═══════════════════════════════════════════════════════════════
+   PAINEL DO COLABORADOR
+   ═══════════════════════════════════════════════════════════════ *@
+@if (!admin)
+{
+    var ordens      = (List<OrdemServico>)ViewBag.Minhas;
+    var temposRaw   = ViewBag.TemposPorOS as Dictionary<int, (TimeSpan Tempo, bool Ativo)>;
+    int emExecucao  = ViewBag.EmExecucao;
+    int aguardando  = ViewBag.Aguardando;
+    int pendentes   = ViewBag.Pendentes;
+    int concluidas  = ViewBag.Concluidas;
+    int sessionId   = 0;
+    int.TryParse(Context.Session.GetString("UsuarioId"), out sessionId);
+
+    <section class="page-card">
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 page-heading">
+            <div>
+                <h1>Minhas OS</h1>
+                <p>Olá, @ViewBag.UsuarioNome. Acompanhe suas ordens de serviço.</p>
+            </div>
+            <a class="btn btn-primary btn-lg" asp-controller="OrdensServico" asp-action="Abrir">
+                <span class="d-flex align-items-center gap-2">
+                    <svg class="button-icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                    Abrir Nova OS
+                </span>
+            </a>
+        </div>
+
+        @* KPI cards pessoais *@
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-xl-3">
+                <div class="metric @(pendentes > 0 ? "metric-urgent" : "")">
+                    <div class="metric-icon @(pendentes > 0 ? "metric-icon-urgent" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01"/></svg>
+                    </div>
+                    <div><span>Pendentes</span><strong>@pendentes</strong><span>Aguardando</span></div>
+                </div>
+            </div>
+            <div class="col-6 col-xl-3">
+                <div class="metric" style="border-color:#fcd34d;background:#fffbeb">
+                    <div class="metric-icon" style="color:#d97706;background:#fef3c7">
+                        <svg viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg>
+                    </div>
+                    <div><span>Em Execução</span><strong style="color:#d97706">@emExecucao</strong><span>Em andamento</span></div>
+                </div>
+            </div>
+            <div class="col-6 col-xl-3">
+                <div class="metric warning">
+                    <div class="metric-icon metric-icon-warn">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    </div>
+                    <div><span>Aguardando</span><strong>@aguardando</strong><span>Pausadas</span></div>
+                </div>
+            </div>
+            <div class="col-6 col-xl-3">
+                <div class="metric success">
+                    <div class="metric-icon metric-icon-ok">
+                        <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>
+                    </div>
+                    <div><span>Concluídas</span><strong>@concluidas</strong><span>Finalizadas</span></div>
+                </div>
+            </div>
+        </div>
+
+        @* Tabs de filtro *@
+        <div class="status-tabs">
+            @{
+                var tabs = new[] {
+                    ("", "Todas"),
+                    ("Em Execucao", "Em Execução"),
+                    ("Aguardando", "Aguardando"),
+                    ("Pendente", "Pendente"),
+                    ("Concluida", "Concluídas")
+                };
+                foreach (var (val, label) in tabs)
+                {
+                    var ativo = statusFiltro == val;
+                    var extraClass = ativo ? val switch {
+                        "Em Execucao" => "active-execucao",
+                        "Aguardando"  => "active-aguardando",
+                        "Concluida"   => "active-concluida",
+                        _             => "active"
+                    } : "";
+                    <a href="?statusFiltro=@val" class="status-tab @(ativo ? extraClass : "")">@label</a>
+                }
+            }
+        </div>
+
+        @* Lista de OS *@
+        @if (!ordens.Any())
+        {
+            <div class="empty-state">
+                <svg style="width:32px;height:32px;fill:none;stroke:#9ca3af;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;display:block;margin:0 auto .5rem" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/></svg>
+                Nenhuma OS encontrada para este filtro.
+            </div>
+        }
+        else
+        {
+            @* Tabela desktop *@
+            <div class="table-responsive d-none d-md-block">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>OS</th>
+                            <th>Equipamento</th>
+                            <th>Localização</th>
+                            <th>Papel</th>
+                            <th>Tempo</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in ordens)
+                        {
+                            var info = temposRaw != null && temposRaw.TryGetValue(item.Id, out var t) ? t : default;
+                            var timerAtivo = info.Ativo;
+                            var rowCss = item.Status == "Em Execucao" ? "row-execucao" : timerAtivo ? "row-timer-ativo" : "";
+                            var isResponsavel = item.ResponsavelId == sessionId;
+                            <tr class="@rowCss">
+                                <td>
+                                    <strong>OS@(item.DataAbertura.ToLocalTime().Year)-@item.Id.ToString("000000")</strong>
+                                    @if (timerAtivo) { <br/><span class="badge-timer-ativo">● rodando</span> }
+                                </td>
+                                <td>
+                                    @item.Equipamento.Nome
+                                    @if (!string.IsNullOrWhiteSpace(item.Equipamento.NI))
+                                    { <br/><small class="text-muted">NI: @item.Equipamento.NI</small> }
+                                </td>
+                                <td>@item.Equipamento.Localizacao</td>
+                                <td>
+                                    @if (isResponsavel) { <span class="status-pill status-execucao">Responsável</span> }
+                                    else { <span class="status-pill status-pendente">Solicitante</span> }
+                                </td>
+                                <td style="white-space:nowrap;font-size:.88rem">
+                                    @if (info.Tempo > TimeSpan.Zero)
+                                    { <span class="@(timerAtivo ? "badge-timer-ativo" : "text-muted")">@FormatarTempo(info.Tempo)</span> }
+                                    else { <span class="text-muted">—</span> }
+                                </td>
+                                <td><span class="status-pill @StatusClass(item.Status)">@StatusLabel(item.Status)</span></td>
+                                <td class="text-end" style="white-space:nowrap">
+                                    @if (isResponsavel && item.Status != "Concluida")
+                                    {
+                                        <a class="btn btn-sm btn-success me-1" asp-controller="Execucao" asp-action="Detalhes" asp-route-id="@item.Id">Abrir Execução</a>
+                                    }
+                                    <a class="btn btn-sm btn-outline-primary" asp-controller="OrdensServico" asp-action="Detalhes" asp-route-id="@item.Id">Detalhes</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @* Cards mobile *@
+            <div class="mobile-list d-md-none">
+                @foreach (var item in ordens)
+                {
+                    var info = temposRaw != null && temposRaw.TryGetValue(item.Id, out var t) ? t : default;
+                    var cardCss = item.Status == "Em Execucao" ? "mobile-card-execucao" : "";
+                    var isResponsavel = item.ResponsavelId == sessionId;
+                    <div class="mobile-card @cardCss">
+                        <div class="d-flex justify-content-between gap-2">
+                            <div>
+                                <strong>OS@(item.DataAbertura.ToLocalTime().Year)-@item.Id.ToString("000000")</strong>
+                                @if (info.Ativo) { <span class="badge-timer-ativo ms-1">● @FormatarTempo(info.Tempo)</span> }
+                            </div>
+                            <span class="status-pill @StatusClass(item.Status)">@StatusLabel(item.Status)</span>
+                        </div>
+                        <div>@item.Equipamento.Nome</div>
+                        <small>@item.Equipamento.Localizacao · @item.DataAbertura.ToLocalTime().ToString("dd/MM HH:mm")</small>
+                        <div class="d-flex gap-2 mt-2 flex-wrap">
+                            @if (isResponsavel && item.Status != "Concluida")
+                            {
+                                <a class="btn btn-success btn-sm flex-fill" asp-controller="Execucao" asp-action="Detalhes" asp-route-id="@item.Id">Abrir Execução</a>
+                            }
+                            <a class="btn btn-outline-primary btn-sm flex-fill" asp-controller="OrdensServico" asp-action="Detalhes" asp-route-id="@item.Id">Detalhes</a>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </section>
+}
+
+@* ═══════════════════════════════════════════════════════════════
+   PAINEL DA OPP (ADMIN) — PÁGINA INICIAL
+   ═══════════════════════════════════════════════════════════════ *@
+@if (admin)
+{
+    var pendentesLista = (List<OrdemServico>)ViewBag.PendentesLista;
+    var paradasLista   = (List<OrdemServico>)ViewBag.ParadasLista;
+    int pendentes      = ViewBag.Pendentes;
+    int emExecucao     = ViewBag.EmExecucao;
+    int aguardando     = ViewBag.Aguardando;
+    int concluidas     = ViewBag.Concluidas;
+    int total          = pendentes + emExecucao + aguardando + concluidas;
+
+    <section class="page-card">
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 page-heading">
+            <div>
+                <h1>Página Inicial</h1>
+                <p>Olá, @ViewBag.UsuarioNome. Visão geral das ordens de serviço.</p>
+            </div>
+            <a class="btn btn-primary btn-lg" asp-controller="OrdensServico" asp-action="Abrir">
+                <span class="d-flex align-items-center gap-2">
+                    <svg class="button-icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                    Abrir Nova OS
+                </span>
+            </a>
+        </div>
+
+        @* KPI cards globais *@
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-xl-3">
+                <div class="metric @(pendentes > 0 ? "metric-urgent" : "")">
+                    <div class="metric-icon @(pendentes > 0 ? "metric-icon-urgent" : "")">
+                        <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01"/></svg>
+                    </div>
+                    <div><span>Pendentes</span><strong>@pendentes</strong><span>Aguardando designação</span></div>
+                </div>
+            </div>
+            <div class="col-6 col-xl-3">
+                <div class="metric">
+                    <div class="metric-icon metric-icon-exec">
+                        <svg viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg>
+                    </div>
+                    <div><span>Em Execução</span><strong>@emExecucao</strong><span>Em andamento</span></div>
+                </div>
+            </div>
+            <div class="col-6 col-xl-3">
+                <div class="metric warning">
+                    <div class="metric-icon metric-icon-warn">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    </div>
+                    <div><span>Aguardando</span><strong>@aguardando</strong><span>Pausadas</span></div>
+                </div>
+            </div>
+            <div class="col-6 col-xl-3">
+                <div class="metric success">
+                    <div class="metric-icon metric-icon-ok">
+                        <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>
+                    </div>
+                    <div><span>Concluídas</span><strong>@concluidas</strong><span>Finalizadas</span></div>
+                </div>
+            </div>
+        </div>
+
+        @* Quick links *@
+        <div class="quick-grid mb-4">
+            <a asp-controller="OrdensServico" asp-action="Index">
+                <svg class="button-icon me-1" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+                Todas as Ordens
+            </a>
+            <a asp-controller="Equipamentos" asp-action="Index">
+                <svg class="button-icon me-1" viewBox="0 0 24 24"><path d="M4 7h16v10H4zM8 7V5h8v2M8 17v2h8v-2"/></svg>
+                Equipamentos
+            </a>
+            <a asp-controller="Relatorios" asp-action="Index">
+                <svg class="button-icon me-1" viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 16v-5M12 16V8M16 16v-3"/></svg>
+                Relatórios
+            </a>
+        </div>
+
+        @* Seção 1: Aguardando Designação *@
+        @if (pendentesLista.Any())
+        {
+            <div class="pending-section mb-4">
+                <div class="pending-header">
+                    <span class="d-flex align-items-center gap-2">
+                        <svg class="button-icon" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01"/></svg>
+                        Aguardando Designação
+                    </span>
+                    <span class="pending-count">@pendentes</span>
+                </div>
+                <div class="table-responsive d-none d-md-block">
+                    <table class="table align-middle mb-0">
+                        <thead><tr><th>OS</th><th>Equipamento</th><th>Localização</th><th>Solicitante</th><th>Abertura</th><th></th></tr></thead>
+                        <tbody>
+                            @foreach (var item in pendentesLista)
+                            {
+                                <tr>
+                                    <td><strong>OS@(item.DataAbertura.ToLocalTime().Year)-@item.Id.ToString("000000")</strong></td>
+                                    <td>@item.Equipamento.Nome @if (!string.IsNullOrWhiteSpace(item.Equipamento.NI)) { <br/><small class="text-muted">NI: @item.Equipamento.NI</small> }</td>
+                                    <td>@item.Equipamento.Localizacao</td>
+                                    <td>@item.Solicitante.Nome</td>
+                                    <td class="text-muted" style="font-size:.86rem">@item.DataAbertura.ToLocalTime().ToString("dd/MM HH:mm")</td>
+                                    <td class="text-end"><a class="btn btn-sm btn-primary" asp-controller="OrdensServico" asp-action="Designar" asp-route-id="@item.Id">Designar</a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mobile-list d-md-none p-2">
+                    @foreach (var item in pendentesLista)
+                    {
+                        <div class="mobile-card">
+                            <strong>OS@(item.DataAbertura.ToLocalTime().Year)-@item.Id.ToString("000000") — @item.Equipamento.Nome</strong>
+                            <small>@item.Equipamento.Localizacao · @item.DataAbertura.ToLocalTime().ToString("dd/MM HH:mm")</small>
+                            <a class="btn btn-primary btn-sm mt-2" asp-controller="OrdensServico" asp-action="Designar" asp-route-id="@item.Id">Designar responsável</a>
+                        </div>
+                    }
+                </div>
+                @if (pendentes > 5)
+                {
+                    <div class="text-center py-2" style="font-size:.85rem;color:var(--muted)">
+                        + @(pendentes - 5) outras. <a asp-controller="OrdensServico" asp-action="Index" asp-route-status="Pendente">Ver todas →</a>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-success d-flex align-items-center gap-2 mb-4">
+                <svg class="button-icon flex-shrink-0" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>
+                Nenhuma OS aguardando designação.
+            </div>
+        }
+
+        @* Seção 2: OS Paradas *@
+        @if (paradasLista.Any())
+        {
+            <div class="table-panel">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h2 class="h5 mb-0 d-flex align-items-center gap-2">
+                        <svg style="width:18px;height:18px;fill:none;stroke:#92400e;stroke-width:2;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                        OS Paradas há Mais Tempo
+                    </h2>
+                    <a class="btn btn-sm btn-outline-secondary" asp-controller="OrdensServico" asp-action="Index" asp-route-status="Aguardando">Ver todas</a>
+                </div>
+                <div class="table-responsive d-none d-md-block">
+                    <table class="table align-middle mb-0">
+                        <thead><tr><th>OS</th><th>Equipamento</th><th>Localização</th><th>Responsável</th><th>Parada desde</th><th></th></tr></thead>
+                        <tbody>
+                            @foreach (var item in paradasLista)
+                            {
+                                var diasParada = (DateTime.UtcNow - item.DataAbertura).Days;
+                                <tr>
+                                    <td><strong>OS@(item.DataAbertura.ToLocalTime().Year)-@item.Id.ToString("000000")</strong></td>
+                                    <td>@item.Equipamento.Nome</td>
+                                    <td>@item.Equipamento.Localizacao</td>
+                                    <td>@(item.Responsavel?.Nome ?? "—")</td>
+                                    <td><span class="text-muted" style="font-size:.85rem">@item.DataAbertura.ToLocalTime().ToString("dd/MM/yy")</span> <small class="text-danger">(@diasParada d)</small></td>
+                                    <td class="text-end"><a class="btn btn-sm btn-outline-primary" asp-controller="OrdensServico" asp-action="Detalhes" asp-route-id="@item.Id">Detalhes</a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mobile-list d-md-none">
+                    @foreach (var item in paradasLista)
+                    {
+                        var diasParada = (DateTime.UtcNow - item.DataAbertura).Days;
+                        <div class="mobile-card">
+                            <div class="d-flex justify-content-between gap-2">
+                                <strong>OS@(item.DataAbertura.ToLocalTime().Year)-@item.Id.ToString("000000")</strong>
+                                <span class="status-pill status-aguardando">Aguardando</span>
+                            </div>
+                            <div>@item.Equipamento.Nome — @item.Equipamento.Localizacao</div>
+                            <small class="text-danger">Parada há @diasParada dia(s)</small>
+                            <a class="btn btn-outline-primary btn-sm mt-2" asp-controller="OrdensServico" asp-action="Detalhes" asp-route-id="@item.Id">Detalhes</a>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info d-flex align-items-center gap-2">
+                <svg class="button-icon flex-shrink-0" viewBox="0 0 24 24"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 8v4M12 16h.01"/></svg>
+                Nenhuma OS pausada no momento.
+            </div>
+        }
+    </section>
+}

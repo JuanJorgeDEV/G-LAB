@@ -1,0 +1,174 @@
+@model OrdemServico
+@{
+    ViewData["Title"] = $"Execucao OS #{Model.Id}";
+    var tempoSegundos = (int)ViewBag.TempoSegundos;
+    var tempoAberto   = (bool)ViewBag.TempoAberto;
+    var podeAtuar     = (bool)ViewBag.PodeAtuar;
+    var concluida     = Model.Status == "Concluida";
+    var pausada       = Model.Status == "Aguardando";
+    var emExecucao    = Model.Status == "Em Execucao";
+}
+
+<div class="mb-3">
+    <a class="btn btn-outline-secondary btn-sm" asp-controller="OrdensServico" asp-action="Detalhes" asp-route-id="@Model.Id">
+        <svg style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Voltar para OS
+    </a>
+</div>
+
+<div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
+    <div>
+        <p class="text-muted mb-1">
+            OS #@Model.Id
+            @if (emExecucao && tempoAberto && podeAtuar)
+            {
+                <span class="badge bg-success ms-1" style="font-size:.75rem;vertical-align:middle">● Cronômetro ativo</span>
+            }
+        </p>
+        <h1 class="h3">@Model.Equipamento.Nome</h1>
+    </div>
+    <div id="workTimer" class="work-time @(emExecucao && tempoAberto ? "work-time-running" : "")">
+        00h00
+    </div>
+</div>
+
+<div class="detail-panel mb-4">
+    <dl class="row mb-0">
+        <dt class="col-sm-4">Local</dt>
+        <dd class="col-sm-8">@Model.Equipamento.Localizacao</dd>
+        <dt class="col-sm-4">Problema</dt>
+        <dd class="col-sm-8">@Model.DescricaoProblema</dd>
+        <dt class="col-sm-4">Status</dt>
+        <dd class="col-sm-8">
+            @if (concluida)  { <span class="status-pill status-concluida">Concluída</span> }
+            else if (pausada){ <span class="status-pill status-aguardando">Pausada</span> }
+            else             { <span class="status-pill status-execucao">Em Execução</span> }
+        </dd>
+        <dt class="col-sm-4">Responsável</dt>
+        <dd class="col-sm-8">@(Model.Responsavel?.Nome ?? "Não designado")</dd>
+    </dl>
+</div>
+
+@if (podeAtuar && !concluida)
+{
+    <div class="action-grid">
+        @* Iniciar: apenas quando OS está Em Execucao mas sem timer aberto (designada pela OPP) *@
+        @if (emExecucao && !tempoAberto)
+        {
+            <a class="btn btn-success btn-lg" asp-action="Iniciar" asp-route-id="@Model.Id">
+                <span class="d-flex align-items-center justify-content-center gap-2">
+                    <svg class="button-icon" viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg>
+                    Iniciar
+                </span>
+            </a>
+        }
+
+        @* Pausar: quando timer está rodando *@
+        @if (emExecucao && tempoAberto)
+        {
+            <button class="btn btn-warning btn-lg" data-bs-toggle="modal" data-bs-target="#pausarModal">
+                <span class="d-flex align-items-center justify-content-center gap-2">
+                    <svg class="button-icon" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                    Pausar Trabalho
+                </span>
+            </button>
+        }
+
+        @* Continuar: apenas quando pausada *@
+        @if (pausada)
+        {
+            <a class="btn btn-primary btn-lg" asp-action="Continuar" asp-route-id="@Model.Id">
+                <span class="d-flex align-items-center justify-content-center gap-2">
+                    <svg class="button-icon" viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg>
+                    Continuar
+                </span>
+            </a>
+        }
+
+        @* Finalizar: sempre disponível enquanto não concluída *@
+        <button class="btn btn-danger btn-lg" data-bs-toggle="modal" data-bs-target="#finalizarModal">
+            <span class="d-flex align-items-center justify-content-center gap-2">
+                <svg class="button-icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>
+                Finalizar OS
+            </span>
+        </button>
+    </div>
+}
+else if (!podeAtuar)
+{
+    <div class="alert alert-info d-flex align-items-center gap-2">
+        <svg class="button-icon flex-shrink-0" viewBox="0 0 24 24"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 8v4M12 16h.01"/></svg>
+        Você está visualizando esta OS como administrador. Apenas o responsável designado pode alterar o andamento.
+    </div>
+}
+
+@* Modal: Pausar Trabalho *@
+<div class="modal fade" id="pausarModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form asp-action="Pausar" method="post" class="modal-content">
+            <input type="hidden" name="id" value="@Model.Id" />
+            <div class="modal-header">
+                <h2 class="modal-title h5">Pausar Trabalho</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label" for="motivoPausa">Descreva o motivo da pausa</label>
+                <textarea class="form-control" id="motivoPausa" name="motivo" rows="3"
+                          placeholder="Ex: Aguardando contator de 220V do almoxarifado." required></textarea>
+                <div class="form-text">Este motivo ficará registrado no histórico da OS.</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-warning">Confirmar Pausa</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@* Modal: Confirmar Finalizar *@
+<div class="modal fade" id="finalizarModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5">Confirmar Conclusão</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza de que deseja concluir esta Ordem de Serviço?</p>
+                <p class="text-muted mb-0">Esta ação calculará as horas-homem e fechará o chamado. Ela não pode ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form asp-action="Finalizar" method="post" style="display:inline">
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <button class="btn btn-danger">Sim, concluir OS</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(function () {
+    var total    = @tempoSegundos;
+    var rodando  = @(tempoAberto && emExecucao && podeAtuar ? "true" : "false");
+    var inicio   = Date.now();
+    var el       = document.getElementById('workTimer');
+
+    function formatar(s) {
+        var h = Math.floor(s / 3600);
+        var m = Math.floor((s % 3600) / 60);
+        return (h < 10 ? '0' : '') + h + 'h' + (m < 10 ? '0' : '') + m;
+    }
+
+    function atualizar() {
+        var decorrido = rodando ? Math.floor((Date.now() - inicio) / 1000) : 0;
+        el.textContent = formatar(total + decorrido);
+    }
+
+    atualizar();
+    if (rodando) setInterval(atualizar, 10000); // atualiza a cada 10s (minutos no display)
+}());
+</script>
+}

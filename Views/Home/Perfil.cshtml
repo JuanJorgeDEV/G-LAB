@@ -1,0 +1,27 @@
+@model Usuario
+@{
+    ViewData["Title"] = "Perfil";
+}
+
+<section class="page-card compact-page">
+    <div class="page-heading">
+        <h1>Perfil</h1>
+        <p>Dados do usuário conectado ao sistema.</p>
+    </div>
+
+    <div class="profile-grid">
+        <div class="profile-avatar" aria-hidden="true">
+            @Model.Nome.Substring(0, 1).ToUpper()
+        </div>
+        <div class="profile-info">
+            <dl>
+                <dt>Nome</dt>
+                <dd>@Model.Nome</dd>
+                <dt>E-mail cadastrado</dt>
+                <dd>@Model.Email</dd>
+                <dt>Função</dt>
+                <dd>@Model.Perfil</dd>
+            </dl>
+        </div>
+    </div>
+</section>

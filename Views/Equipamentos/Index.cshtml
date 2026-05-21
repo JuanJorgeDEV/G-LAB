@@ -1,0 +1,229 @@
+@model List<Equipamento>
+@{
+    ViewData["Title"] = "Equipamentos";
+    var emManutencao = (HashSet<int>)ViewBag.EmManutencao;
+}
+
+<div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
+    <div>
+        <h1 class="h3">Equipamentos</h1>
+        <p class="text-muted mb-0">Cadastre, edite e pesquise equipamentos com ou sem NI.</p>
+    </div>
+    <a class="btn btn-primary btn-lg" asp-action="Cadastrar">
+        <span class="d-flex align-items-center gap-2">
+            <svg class="button-icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            Cadastrar equipamento
+        </span>
+    </a>
+</div>
+
+<form class="row g-2 mb-3" method="get">
+    <div class="col-12 col-md">
+        <input class="form-control form-control-lg" name="busca" value="@ViewBag.Busca" placeholder="Buscar por NI, nome ou local" />
+    </div>
+    <div class="col-12 col-md-auto">
+        <button class="btn btn-outline-primary btn-lg w-100">Buscar</button>
+    </div>
+</form>
+
+@* Tabela desktop *@
+<div class="table-responsive d-none d-md-block">
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th>NI</th>
+                <th>Nome</th>
+                <th>Localização</th>
+                <th>Vínculo</th>
+                <th>Ativo</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@(item.NI ?? "—")</td>
+                    <td><strong>@item.Nome</strong></td>
+                    <td>@item.Localizacao</td>
+                    <td>@(item.Vinculo ?? "Não informado")</td>
+                    <td>
+                        @if (!item.Ativo)
+                        {
+                            <span class="status-pill status-pendente">Inativo</span>
+                        }
+                        else if (emManutencao.Contains(item.Id))
+                        {
+                            <span class="status-pill status-aguardando">Em Manutenção</span>
+                        }
+                        else
+                        {
+                            <span class="status-pill status-concluida">Ativo</span>
+                        }
+                    </td>
+                    <td class="text-end" style="white-space:nowrap">
+                        <button class="btn btn-sm btn-outline-secondary me-1"
+                                data-bs-toggle="modal"
+                                data-bs-target="#modalHistorico"
+                                data-equip-id="@item.Id"
+                                data-equip-nome="@item.Nome">
+                            <span class="d-flex align-items-center gap-1">
+                                <svg style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                                Histórico
+                            </span>
+                        </button>
+                        <a class="btn btn-sm btn-outline-primary" asp-action="Editar" asp-route-id="@item.Id">Editar</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@* Cards mobile *@
+<div class="mobile-list d-md-none">
+    @foreach (var item in Model)
+    {
+        <div class="mobile-card">
+            <div class="d-flex justify-content-between align-items-start gap-2">
+                <strong>@item.Nome</strong>
+                @if (!item.Ativo)
+                {
+                    <span class="status-pill status-pendente">Inativo</span>
+                }
+                else if (emManutencao.Contains(item.Id))
+                {
+                    <span class="status-pill status-aguardando">Em Manutenção</span>
+                }
+                else
+                {
+                    <span class="status-pill status-concluida">Ativo</span>
+                }
+            </div>
+            <small>NI: @(item.NI ?? "—")</small>
+            <small>Local: @item.Localizacao</small>
+            <small>Vínculo: @(item.Vinculo ?? "Não informado")</small>
+            <div class="d-flex gap-2 mt-2">
+                <button class="btn btn-outline-secondary btn-sm flex-fill"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalHistorico"
+                        data-equip-id="@item.Id"
+                        data-equip-nome="@item.Nome">
+                    Histórico OS
+                </button>
+                <a class="btn btn-outline-primary btn-sm flex-fill" asp-action="Editar" asp-route-id="@item.Id">Editar</a>
+            </div>
+        </div>
+    }
+</div>
+
+@* Modal histórico de OS *@
+<div class="modal fade" id="modalHistorico" tabindex="-1" aria-labelledby="modalHistoricoTitulo" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title h5 mb-0" id="modalHistoricoTitulo">Histórico de OS</h2>
+                    <small class="text-muted" id="modalHistoricoSubtitulo"></small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body p-0" id="modalHistoricoCorpo">
+                <div class="d-flex align-items-center justify-content-center gap-2 p-4 text-muted" id="modalHistoricoLoading">
+                    <div class="spinner-border spinner-border-sm" role="status"></div>
+                    Carregando histórico...
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(function () {
+    var statusLabel = {
+        'Em Execucao': 'Em Execução',
+        'Concluida':   'Concluída',
+        'Aguardando':  'Aguardando',
+        'Pendente':    'Pendente'
+    };
+    var statusClass = {
+        'Em Execucao': 'status-execucao',
+        'Concluida':   'status-concluida',
+        'Aguardando':  'status-aguardando',
+        'Pendente':    'status-pendente'
+    };
+
+    document.getElementById('modalHistorico').addEventListener('show.bs.modal', function (event) {
+        var btn       = event.relatedTarget;
+        var equipId   = btn.getAttribute('data-equip-id');
+        var equipNome = btn.getAttribute('data-equip-nome');
+
+        document.getElementById('modalHistoricoTitulo').textContent = 'Histórico de OS — ' + equipNome;
+        document.getElementById('modalHistoricoSubtitulo').textContent = '';
+
+        var corpo    = document.getElementById('modalHistoricoCorpo');
+        var loading  = document.getElementById('modalHistoricoLoading');
+        corpo.innerHTML = '';
+        corpo.appendChild(loading);
+        loading.style.display = 'flex';
+
+        fetch('/Equipamentos/HistoricoOS?id=' + equipId)
+            .then(function (r) { return r.json(); })
+            .then(function (ordens) {
+                loading.style.display = 'none';
+                document.getElementById('modalHistoricoSubtitulo').textContent =
+                    ordens.length === 0
+                        ? 'Nenhuma OS registrada para este ativo'
+                        : ordens.length + ' ordem(ns) de serviço encontrada(s)';
+
+                if (ordens.length === 0) {
+                    corpo.innerHTML =
+                        '<div class="empty-state m-3">' +
+                        '<svg style="width:32px;height:32px;fill:none;stroke:#9ca3af;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;display:block;margin:0 auto .5rem" viewBox="0 0 24 24">' +
+                        '<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/>' +
+                        '</svg>Neste ativo ainda não há OS registradas.</div>';
+                    return;
+                }
+
+                var rows = ordens.map(function (o) {
+                    var label = statusLabel[o.status] || o.status;
+                    var cls   = statusClass[o.status] || 'status-pendente';
+                    return '<tr>' +
+                        '<td><strong>OS' + String(o.id).padStart(6, '0') + '</strong></td>' +
+                        '<td style="white-space:nowrap;font-size:.86rem;color:#637199">' + o.dataAbertura + '</td>' +
+                        '<td style="max-width:260px">' + escapeHtml(o.descricao) + '</td>' +
+                        '<td>' + escapeHtml(o.responsavel) + '</td>' +
+                        '<td><span class="status-pill ' + cls + '">' + label + '</span></td>' +
+                        '<td class="text-end"><a class="btn btn-sm btn-outline-primary" href="/OrdensServico/Detalhes/' + o.id + '">Ver OS</a></td>' +
+                        '</tr>';
+                }).join('');
+
+                corpo.innerHTML =
+                    '<div class="table-responsive">' +
+                    '<table class="table align-middle mb-0">' +
+                    '<thead><tr>' +
+                    '<th>OS</th><th>Data</th><th>Problema</th><th>Responsável</th><th>Status</th><th></th>' +
+                    '</tr></thead>' +
+                    '<tbody>' + rows + '</tbody>' +
+                    '</table></div>';
+            })
+            .catch(function () {
+                loading.style.display = 'none';
+                corpo.innerHTML = '<div class="alert alert-danger m-3">Erro ao carregar o histórico.</div>';
+            });
+    });
+
+    function escapeHtml(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+}());
+</script>
+}

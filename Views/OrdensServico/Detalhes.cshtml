@@ -1,0 +1,67 @@
+@model OrdemServico
+@{
+    ViewData["Title"] = $"OS #{Model.Id}";
+    var tempo = (TimeSpan)ViewBag.Tempo;
+    var historico = (List<HistoricoOS>)ViewBag.Historico;
+}
+
+<div class="mb-3">
+    <a class="btn btn-outline-secondary btn-sm" href="javascript:history.back()">
+        <svg style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Voltar
+    </a>
+</div>
+
+<div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
+    <div>
+        <p class="text-muted mb-1">OS #@Model.Id</p>
+        <h1 class="h3">@Model.Equipamento.Nome</h1>
+    </div>
+    @if (Model.ResponsavelId is not null && Model.Status != "Concluida")
+    {
+        <a class="btn btn-primary btn-lg" asp-controller="Execucao" asp-action="Detalhes" asp-route-id="@Model.Id">Abrir execucao</a>
+    }
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-lg-7">
+        <div class="detail-panel">
+            <dl class="row mb-0">
+                <dt class="col-sm-4">Status</dt>
+                <dd class="col-sm-8">@Model.Status</dd>
+                <dt class="col-sm-4">NI do Ativo</dt>
+                <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.Equipamento.NI) ? "Sem NI" : Model.Equipamento.NI)</dd>
+                <dt class="col-sm-4">Local</dt>
+                <dd class="col-sm-8">@Model.Equipamento.Localizacao</dd>
+                <dt class="col-sm-4">Vinculo</dt>
+                <dd class="col-sm-8">@(Model.Equipamento.Vinculo ?? "Nao informado")</dd>
+                <dt class="col-sm-4">Solicitante</dt>
+                <dd class="col-sm-8">@Model.Solicitante.Nome</dd>
+                <dt class="col-sm-4">Responsavel</dt>
+                <dd class="col-sm-8">@(Model.Responsavel?.Nome ?? "Nao designado")</dd>
+                <dt class="col-sm-4">Tempo trabalhado</dt>
+                <dd class="col-sm-8">@($"{(int)tempo.TotalHours:00}h{tempo.Minutes:00}")</dd>
+                <dt class="col-sm-4">Problema</dt>
+                <dd class="col-sm-8">@Model.DescricaoProblema</dd>
+            </dl>
+        </div>
+    </div>
+    <div class="col-12 col-lg-5">
+        <div class="detail-panel">
+            <h2 class="h5">Historico</h2>
+            <div class="timeline">
+                @foreach (var item in historico)
+                {
+                    <div>
+                        <strong>@item.Acao</strong>
+                        <small>@item.DataHora.ToLocalTime().ToString("dd/MM/yyyy HH:mm") — @item.Usuario.Nome</small>
+                        @if (!string.IsNullOrWhiteSpace(item.Observacao))
+                        {
+                            <span>@item.Observacao</span>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
