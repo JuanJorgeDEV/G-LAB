@@ -9,6 +9,7 @@ obj/
 
 ## Secrets locais (copie de appsettings.Development.example.json)
 appsettings.Development.json
+appsettings.json
 
 ## User secrets / env
 .env

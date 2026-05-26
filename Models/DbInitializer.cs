@@ -7,9 +7,10 @@ public static class DbInitializer
         if (!db.Usuarios.Any())
         {
             db.Usuarios.AddRange(
-                new Usuario { Nome = "Joao Colaborador", Email = "joao@projeto.local", Senha = "123", Perfil = "Colaborador" },
-                new Usuario { Nome = "Maria Colaboradora", Email = "maria@projeto.local", Senha = "123", Perfil = "Colaborador" },
-                new Usuario { Nome = "OPP Administrador", Email = "admin@projeto.local", Senha = "123", Perfil = "Administrador" }
+                CriarUsuario("Juan Administrador Geral", "geral@projeto.local", "000.000.000-00", "Administrador"),
+                CriarUsuario("Joao Colaborador", "joao@projeto.local", "111.111.111-11", "Colaborador"),
+                CriarUsuario("Maria Colaboradora", "maria@projeto.local", "222.222.222-22", "Colaborador"),
+                CriarUsuario("OPP Administrador", "admin@projeto.local", "333.333.333-33", "Administrador")
             );
         }
 
@@ -23,5 +24,18 @@ public static class DbInitializer
         }
 
         db.SaveChanges();
+    }
+
+    private static Usuario CriarUsuario(string nome, string email, string cpf, string perfil)
+    {
+        var senhaInicial = PasswordHelper.GerarSenhaInicial(nome, cpf);
+        return new Usuario
+        {
+            Nome = nome,
+            Email = email,
+            CPF = cpf,
+            Senha = PasswordHelper.CriarHash(senhaInicial),
+            Perfil = perfil
+        };
     }
 }

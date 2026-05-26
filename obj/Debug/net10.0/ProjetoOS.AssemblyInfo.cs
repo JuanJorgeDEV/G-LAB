@@ -10,10 +10,11 @@
 using System;
 using System.Reflection;
 
+[assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("projeto-os-local-secrets")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("ProjetoOS")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3444f46dee2608b7a1b49f91ad2caf55073e9433")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5c7ab676bd3f67f8802c3e651ae3504a5431df88")]
 [assembly: System.Reflection.AssemblyProductAttribute("ProjetoOS")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ProjetoOS")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

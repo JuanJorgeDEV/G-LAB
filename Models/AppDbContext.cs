@@ -24,5 +24,10 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Usuario>()
             .HasIndex(u => u.Email)
             .IsUnique();
+
+        modelBuilder.Entity<Usuario>()
+            .HasIndex(u => u.CPF)
+            .IsUnique()
+            .HasFilter("\"CPF\" IS NOT NULL AND \"CPF\" <> ''");
     }
 }

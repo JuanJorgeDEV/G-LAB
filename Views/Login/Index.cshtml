@@ -1,5 +1,6 @@
 @{
     ViewData["Title"] = "Login";
+    var emailLembrado = ViewBag.EmailLembrado as string;
 }
 
 <section class="login-panel">
@@ -24,20 +25,20 @@
             <label class="form-label">E-mail ou usuário</label>
             <div class="input-with-symbol">
                 <span class="input-symbol"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" /></svg></span>
-                <input class="form-control" name="email" type="email" required placeholder="Digite seu e-mail ou usuário" value="admin@projeto.local" />
+                <input class="form-control" name="email" type="email" autocomplete="username" required placeholder="Digite seu e-mail ou usuário" value="@(emailLembrado ?? "geral@projeto.local")" />
             </div>
         </div>
         <div>
             <label class="form-label">Senha</label>
             <div class="input-with-symbol">
                 <span class="input-symbol"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11V8a5 5 0 0 1 10 0v3M6 11h12v10H6z" /></svg></span>
-                <input class="form-control" name="senha" type="password" required placeholder="Digite sua senha" value="123" />
+                <input class="form-control" name="senha" type="password" autocomplete="current-password" required placeholder="Digite sua senha" />
             </div>
         </div>
         <div class="login-options">
             <label class="form-check">
-                <input class="form-check-input" type="checkbox" />
-                <span class="form-check-label">Lembrar acesso</span>
+                <input class="form-check-input" type="checkbox" name="lembrarAcesso" value="true" checked="@(!string.IsNullOrWhiteSpace(emailLembrado))" />
+                <span class="form-check-label">Lembrar meu acesso</span>
             </label>
             <a class="text-decoration-none fw-semibold" href="#">Esqueci minha senha</a>
         </div>
@@ -45,7 +46,7 @@
     </form>
 
     <div class="demo-users">
-        <span>Acesso para Colaborador, OPP e Administrador</span>
-        <strong>Teste: admin@projeto.local / 123</strong>
+        <span>admin@projeto.local · joao@projeto.local · maria@projeto.local</span>
+        <strong>Senha: 123 (ou primeiro nome + CPF para contas novas)</strong>
     </div>
 </section>

@@ -47,6 +47,9 @@
                         <a class="@(controller == "Equipamentos" ? "active" : "")" asp-controller="Equipamentos" asp-action="Index">
                             <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16v10H4zM8 7V5h8v2M8 17v2h8v-2" /></svg></span> Equipamentos
                         </a>
+                        <a class="@(controller == "Funcionarios" ? "active" : "")" asp-controller="Funcionarios" asp-action="Index">
+                            <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg></span> Funcionários
+                        </a>
                         <a class="@(controller == "Relatorios" ? "active" : "")" asp-controller="Relatorios" asp-action="Index">
                             <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 16v-5M12 16V8M16 16v-3" /></svg></span> Relatórios
                         </a>
@@ -95,6 +98,10 @@
                             <a asp-controller="Equipamentos" asp-action="Index">
                                 <svg class="mobile-nav-icon" viewBox="0 0 24 24"><path d="M4 7h16v10H4zM8 7V5h8v2M8 17v2h8v-2"/></svg>
                                 Equipamentos
+                            </a>
+                            <a asp-controller="Funcionarios" asp-action="Index">
+                                <svg class="mobile-nav-icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                Funcionários
                             </a>
                             <a asp-controller="Relatorios" asp-action="Index">
                                 <svg class="mobile-nav-icon" viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 16v-5M12 16V8M16 16v-3"/></svg>

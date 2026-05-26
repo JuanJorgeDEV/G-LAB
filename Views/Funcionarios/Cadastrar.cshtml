@@ -1,0 +1,48 @@
+@model Usuario
+@{
+    ViewData["Title"] = "Adicionar funcionário";
+}
+
+<section class="page-card compact-page">
+    <div class="page-heading">
+        <h1>Adicionar funcionário</h1>
+        <p>A senha inicial será gerada pela convenção: primeiro nome + CPF sem pontos.</p>
+    </div>
+
+    <form asp-action="Salvar" method="post" class="vstack gap-3">
+        <div>
+            <label class="form-label">Nome completo</label>
+            <input class="form-control" asp-for="Nome" required />
+            <span class="text-danger" asp-validation-for="Nome"></span>
+        </div>
+        <div>
+            <label class="form-label">E-mail</label>
+            <input class="form-control" asp-for="Email" type="email" required />
+            <span class="text-danger" asp-validation-for="Email"></span>
+        </div>
+        <div>
+            <label class="form-label">CPF</label>
+            <input class="form-control" asp-for="CPF" placeholder="000.000.000-00" required />
+            <span class="text-danger" asp-validation-for="CPF"></span>
+        </div>
+        <div>
+            <label class="form-label">Função</label>
+            <select class="form-select" asp-for="Perfil">
+                <option>Colaborador</option>
+                <option>Administrador</option>
+            </select>
+        </div>
+
+        <div class="support-box mt-2">
+            <div>
+                <strong>Exemplo</strong>
+                <span>Maria Silva + 123.456.789-00 = maria12345678900</span>
+            </div>
+        </div>
+
+        <div class="d-flex flex-column flex-md-row gap-2 justify-content-end">
+            <a class="btn btn-outline-primary" asp-action="Index">Cancelar</a>
+            <button class="btn btn-primary" type="submit">Salvar funcionário</button>
+        </div>
+    </form>
+</section>

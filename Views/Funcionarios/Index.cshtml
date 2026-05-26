@@ -1,0 +1,47 @@
+@model List<Usuario>
+@{
+    ViewData["Title"] = "Funcionários";
+}
+
+<section class="page-card">
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 page-heading">
+        <div>
+            <h1>Funcionários</h1>
+            <p>Gerencie os acessos de colaboradores e administradores.</p>
+        </div>
+        <a class="btn btn-primary" asp-action="Cadastrar">Adicionar funcionário</a>
+    </div>
+
+    <div class="table-panel">
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>E-mail</th>
+                        <th>CPF</th>
+                        <th>Função</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var usuario in Model)
+                    {
+                        <tr>
+                            <td>@usuario.Nome</td>
+                            <td>@usuario.Email</td>
+                            <td>@usuario.CPF</td>
+                            <td>@usuario.Perfil</td>
+                            <td class="text-end">
+                                <form asp-action="RedefinirSenha" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@usuario.Id" />
+                                    <button class="btn btn-outline-primary btn-sm" type="submit">Redefinir senha</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
