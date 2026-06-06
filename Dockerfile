@@ -8,6 +8,7 @@ RUN dotnet publish -c Release -o /app/publish
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
-ENV ASPNETCORE_URLS=http://0.0.0.0:10000
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
 EXPOSE 10000
-ENTRYPOINT ["dotnet", "ProjetoOS.dll"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
