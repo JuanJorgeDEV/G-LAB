@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Juan\\G-LAB\\ProjetoOS\\ProjetoOS.csproj": {}
+    "c:\\Juan\\G-LAB\\ProjetoOS\\ProjetoOS.csproj": {}
   },
   "projects": {
-    "C:\\Juan\\G-LAB\\ProjetoOS\\ProjetoOS.csproj": {
+    "c:\\Juan\\G-LAB\\ProjetoOS\\ProjetoOS.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Juan\\G-LAB\\ProjetoOS\\ProjetoOS.csproj",
+        "projectUniqueName": "c:\\Juan\\G-LAB\\ProjetoOS\\ProjetoOS.csproj",
         "projectName": "ProjetoOS",
-        "projectPath": "C:\\Juan\\G-LAB\\ProjetoOS\\ProjetoOS.csproj",
+        "projectPath": "c:\\Juan\\G-LAB\\ProjetoOS\\ProjetoOS.csproj",
         "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
-        "outputPath": "C:\\Juan\\G-LAB\\ProjetoOS\\obj\\",
+        "outputPath": "c:\\Juan\\G-LAB\\ProjetoOS\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
