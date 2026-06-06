@@ -116,17 +116,61 @@ public class EquipamentosController : BaseController
         return Json(ordens);
     }
 
+    public IActionResult BuscarSugestoesNI(string termo)
+    {
+        if (string.IsNullOrWhiteSpace(termo))
+            return Json(Array.Empty<object>());
+
+        var busca = termo.Trim().ToLower();
+        var equipamentos = _db.Equipamentos.AsNoTracking()
+            .Where(e => e.Ativo && e.NI != null && e.NI.ToLower().Contains(busca))
+            .OrderBy(e => e.NI)
+            .Take(8)
+            .ToList();
+
+        if (equipamentos.Count == 0)
+            return Json(Array.Empty<object>());
+
+        var ids = equipamentos.Select(e => e.Id).ToList();
+        var osAbertas = _db.OrdensServico
+            .Where(o => ids.Contains(o.EquipamentoId) && o.Status != "Concluida")
+            .Select(o => new { o.EquipamentoId, o.Id, o.Status })
+            .ToDictionary(o => o.EquipamentoId);
+
+        return Json(equipamentos.Select(e =>
+        {
+            osAbertas.TryGetValue(e.Id, out var os);
+            return new
+            {
+                ni = e.NI,
+                nome = e.Nome,
+                osAberta = os != null,
+                osAbertaId = os != null ? (int?)os.Id : null,
+                osAbertaStatus = os?.Status
+            };
+        }));
+    }
+
     public IActionResult BuscarPorNI(string ni)
     {
-        var equipamento = _db.Equipamentos.AsNoTracking().FirstOrDefault(e => e.NI == ni && e.Ativo);
+        if (string.IsNullOrWhiteSpace(ni))
+            return NotFound();
+
+        var equipamento = _db.Equipamentos.AsNoTracking()
+            .FirstOrDefault(e => e.NI == ni.Trim() && e.Ativo);
         if (equipamento is null) return NotFound();
 
+        return Json(MontarEquipamentoJson(equipamento));
+    }
+
+    private object MontarEquipamentoJson(Equipamento equipamento)
+    {
         var osAberta = _db.OrdensServico
             .Where(o => o.EquipamentoId == equipamento.Id && o.Status != "Concluida")
             .Select(o => new { o.Id, o.Status })
             .FirstOrDefault();
 
-        return Json(new
+        return new
         {
             id = equipamento.Id,
             nome = equipamento.Nome,
@@ -135,6 +179,6 @@ public class EquipamentosController : BaseController
             osAberta = osAberta != null,
             osAbertaId = osAberta != null ? (int?)osAberta.Id : null,
             osAbertaStatus = osAberta?.Status
-        });
+        };
     }
 }

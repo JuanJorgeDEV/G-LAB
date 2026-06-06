@@ -23,7 +23,10 @@
             <div class="row g-3 align-items-end mb-3">
                 <div class="col-12 col-lg-5">
                     <label class="form-label">NI do Ativo</label>
-                    <input class="form-control form-control-lg" name="ni" id="niInput" placeholder="Ex: 2026-001" />
+                    <div class="ni-search-wrap position-relative">
+                        <input class="form-control form-control-lg" name="ni" id="niInput" placeholder="Ex: 2026-001" autocomplete="off" />
+                        <div class="ni-sugestoes list-group d-none" id="niSugestoes" role="listbox"></div>
+                    </div>
                 </div>
                 <div class="col-12 col-sm-auto">
                     <button class="btn btn-primary btn-lg px-4 w-100" type="button" id="buscarNI" aria-label="Buscar equipamento por NI">
@@ -127,25 +130,57 @@
         const possuiNIValue = document.getElementById('possuiNIValue');
         const niInput = document.getElementById('niInput');
         const buscarNI = document.getElementById('buscarNI');
+        const niSugestoes = document.getElementById('niSugestoes');
         const ativoNome = document.getElementById('ativoNome');
         const ativoLocal = document.getElementById('ativoLocal');
         const ativoVinculo = document.getElementById('ativoVinculo');
+        const equipamentoEncontrado = document.getElementById('equipamentoEncontrado');
+        const btnRegistrar = document.querySelector('[data-bs-target="#decisaoModal"]');
+        const avisoOsAberta = document.getElementById('avisoOsAberta');
+        const avisoTexto = document.getElementById('avisoOsAbertaTexto');
+        const avisoLink = document.getElementById('avisoOsAbertaLink');
+
+        const statusLabel = { 'Em Execucao': 'Em Execução', 'Aguardando': 'Aguardando', 'Pendente': 'Pendente' };
+        let debounceTimer = null;
+        let bloqueadoPorOsAberta = false;
+
+        function limparAvisoOS() {
+            bloqueadoPorOsAberta = false;
+            avisoOsAberta.classList.add('d-none');
+            atualizarBotaoRegistrar();
+        }
+
+        function atualizarBotaoRegistrar() {
+            const modoManual = ativoNaoRegistrado.checked;
+            btnRegistrar.disabled = !modoManual && bloqueadoPorOsAberta;
+        }
+
+        function esconderSugestoes() {
+            niSugestoes.classList.add('d-none');
+            niSugestoes.innerHTML = '';
+        }
 
         function aplicarModoManual(manual) {
             possuiNIValue.value = manual ? 'false' : 'true';
             buscarNI.disabled = manual;
+            niInput.disabled = manual;
             niInput.placeholder = manual ? 'NI não informado' : 'Ex: 2026-001';
             ativoNome.readOnly = !manual;
             ativoLocal.readOnly = !manual;
             ativoVinculo.disabled = !manual;
+
+            limparAvisoOS();
+            esconderSugestoes();
 
             if (manual) {
                 niInput.value = '';
                 ativoNome.value = '';
                 ativoLocal.value = '';
                 ativoVinculo.value = '';
-                document.getElementById('equipamentoEncontrado').classList.add('d-none');
+                equipamentoEncontrado.classList.add('d-none');
                 ativoNome.focus();
+            } else {
+                niInput.focus();
             }
         }
 
@@ -153,48 +188,121 @@
             aplicarModoManual(ativoNaoRegistrado.checked);
         });
 
-        const btnRegistrar = document.querySelector('[data-bs-target="#decisaoModal"]');
-        const avisoOsAberta = document.getElementById('avisoOsAberta');
-        const avisoTexto = document.getElementById('avisoOsAbertaTexto');
-        const avisoLink = document.getElementById('avisoOsAbertaLink');
-
-        function limparAvisoOS() {
-            avisoOsAberta.classList.add('d-none');
-            btnRegistrar.disabled = false;
+        function exibirAvisoOsAberta(equipamento) {
+            avisoTexto.textContent = `OS #${equipamento.osAbertaId} · ${statusLabel[equipamento.osAbertaStatus] ?? equipamento.osAbertaStatus}`;
+            avisoLink.href = `/OrdensServico/Detalhes/${equipamento.osAbertaId}`;
+            avisoOsAberta.classList.remove('d-none');
+            bloqueadoPorOsAberta = true;
+            atualizarBotaoRegistrar();
         }
 
-        document.getElementById('buscarNI').addEventListener('click', async () => {
-            const ni = niInput.value.trim();
-            if (!ni) return;
-            const box = document.getElementById('equipamentoEncontrado');
-            limparAvisoOS();
-            box.classList.remove('d-none');
-            const resposta = await fetch(`/Equipamentos/BuscarPorNI?ni=${encodeURIComponent(ni)}`);
-            if (!resposta.ok) {
-                box.innerHTML = '<strong>Equipamento não encontrado.</strong> Verifique o NI ou marque a opção abaixo.';
-                ativoNome.value = '';
-                ativoLocal.value = '';
-                ativoVinculo.value = '';
-                return;
-            }
-            const equipamento = await resposta.json();
+        function preencherEquipamento(equipamento) {
             ativoNome.value = equipamento.nome ?? '';
             ativoLocal.value = equipamento.localizacao ?? '';
             ativoVinculo.disabled = false;
             ativoVinculo.value = equipamento.vinculo ?? '';
             ativoVinculo.disabled = true;
-            box.innerHTML = `<strong>Equipamento encontrado:</strong> ${equipamento.nome}`;
+            equipamentoEncontrado.classList.remove('d-none');
+            equipamentoEncontrado.innerHTML = `<strong>Equipamento encontrado:</strong> ${equipamento.nome}`;
 
+            limparAvisoOS();
             if (equipamento.osAberta) {
-                const statusLabel = { 'Em Execucao': 'Em Execução', 'Aguardando': 'Aguardando', 'Pendente': 'Pendente' };
-                avisoTexto.textContent = `OS #${equipamento.osAbertaId} · ${statusLabel[equipamento.osAbertaStatus] ?? equipamento.osAbertaStatus}`;
-                avisoLink.href = `/OrdensServico/Detalhes/${equipamento.osAbertaId}`;
-                avisoOsAberta.classList.remove('d-none');
-                btnRegistrar.disabled = true;
+                exibirAvisoOsAberta(equipamento);
+            }
+        }
+
+        async function carregarPorNI(ni) {
+            const termo = ni.trim();
+            if (!termo || ativoNaoRegistrado.checked) return;
+
+            esconderSugestoes();
+            equipamentoEncontrado.classList.remove('d-none');
+            const resposta = await fetch(`/Equipamentos/BuscarPorNI?ni=${encodeURIComponent(termo)}`);
+            if (!resposta.ok) {
+                limparAvisoOS();
+                equipamentoEncontrado.innerHTML = '<strong>Equipamento não encontrado.</strong> Verifique o NI ou marque a opção abaixo.';
+                ativoNome.value = '';
+                ativoLocal.value = '';
+                ativoVinculo.value = '';
+                return;
+            }
+
+            const equipamento = await resposta.json();
+            preencherEquipamento(equipamento);
+        }
+
+        async function buscarSugestoes() {
+            const termo = niInput.value.trim();
+            if (!termo || ativoNaoRegistrado.checked) {
+                esconderSugestoes();
+                return;
+            }
+
+            const resposta = await fetch(`/Equipamentos/BuscarSugestoesNI?termo=${encodeURIComponent(termo)}`);
+            const sugestoes = await resposta.json();
+
+            if (!sugestoes.length) {
+                esconderSugestoes();
+                return;
+            }
+
+            niSugestoes.innerHTML = sugestoes.map(s => {
+                const osInfo = s.osAberta
+                    ? `<span class="badge text-bg-warning ms-2">OS #${s.osAbertaId} aberta</span>`
+                    : '';
+                return `<button type="button" class="list-group-item list-group-item-action" data-ni="${s.ni}">
+                    <strong>${s.ni}</strong> — ${s.nome}${osInfo}
+                </button>`;
+            }).join('');
+            niSugestoes.classList.remove('d-none');
+
+            niSugestoes.querySelectorAll('[data-ni]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    niInput.value = btn.dataset.ni;
+                    carregarPorNI(btn.dataset.ni);
+                });
+            });
+
+            const exata = sugestoes.find(s => s.ni.toLowerCase() === termo.toLowerCase());
+            if (exata) {
+                await carregarPorNI(exata.ni);
+            }
+        }
+
+        niInput.addEventListener('input', () => {
+            limparAvisoOS();
+            equipamentoEncontrado.classList.add('d-none');
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(buscarSugestoes, 300);
+        });
+
+        niInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                carregarPorNI(niInput.value);
+            }
+        });
+
+        buscarNI.addEventListener('click', () => carregarPorNI(niInput.value));
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.ni-search-wrap')) {
+                esconderSugestoes();
             }
         });
 
         function enviarOS(euMesmo) {
+            if (possuiNIValue.value === 'true' && bloqueadoPorOsAberta) {
+                return;
+            }
+            if (possuiNIValue.value === 'true' && !niInput.value.trim()) {
+                alert('Informe o NI do ativo ou marque a opção de ativo não registrado.');
+                return;
+            }
+            if (possuiNIValue.value === 'false' && !ativoNome.value.trim()) {
+                alert('Informe o nome do ativo.');
+                return;
+            }
             document.getElementById('euMesmoVouExecutar').value = euMesmo ? 'true' : 'false';
             document.getElementById('osForm').submit();
         }

@@ -20,97 +20,97 @@ build_property.TargetFrameworkVersion = v10.0
 build_property.EntryPointFilePath = 
 build_property.RootNamespace = ProjetoOS
 build_property.RootNamespace = ProjetoOS
-build_property.ProjectDir = C:\Juan\G-LAB\ProjetoOS\
+build_property.ProjectDir = c:\Juan\G-LAB\ProjetoOS\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.RazorLangVersion = 10.0
 build_property.SupportLocalizedComponentNames = 
 build_property.GenerateRazorMetadataSourceChecksumAttributes = 
-build_property.MSBuildProjectDirectory = C:\Juan\G-LAB\ProjetoOS
+build_property.MSBuildProjectDirectory = c:\Juan\G-LAB\ProjetoOS
 build_property._RazorSourceGeneratorDebug = 
 build_property.EffectiveAnalysisLevelStyle = 10.0
 build_property.EnableCodeStyleSeverity = 
 
-[C:/Juan/G-LAB/ProjetoOS/Views/Equipamentos/Form.cshtml]
+[c:/Juan/G-LAB/ProjetoOS/Views/Equipamentos/Form.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRXF1aXBhbWVudG9zXEZvcm0uY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Juan/G-LAB/ProjetoOS/Views/Equipamentos/Index.cshtml]
+[c:/Juan/G-LAB/ProjetoOS/Views/Equipamentos/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRXF1aXBhbWVudG9zXEluZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Juan/G-LAB/ProjetoOS/Views/Execucao/Detalhes.cshtml]
+[c:/Juan/G-LAB/ProjetoOS/Views/Execucao/Detalhes.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRXhlY3VjYW9cRGV0YWxoZXMuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Juan/G-LAB/ProjetoOS/Views/Funcionarios/Cadastrar.cshtml]
+[c:/Juan/G-LAB/ProjetoOS/Views/Funcionarios/Cadastrar.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRnVuY2lvbmFyaW9zXENhZGFzdHJhci5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Juan/G-LAB/ProjetoOS/Views/Funcionarios/Index.cshtml]
+[c:/Juan/G-LAB/ProjetoOS/Views/Funcionarios/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRnVuY2lvbmFyaW9zXEluZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Juan/G-LAB/ProjetoOS/Views/Home/Ajuda.cshtml]
+[c:/Juan/G-LAB/ProjetoOS/Views/Home/Ajuda.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxBanVkYS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Juan/G-LAB/ProjetoOS/Views/Home/Index.cshtml]
+[c:/Juan/G-LAB/ProjetoOS/Views/Home/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Juan/G-LAB/ProjetoOS/Views/Home/Perfil.cshtml]
+[c:/Juan/G-LAB/ProjetoOS/Views/Home/Perfil.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxQZXJmaWwuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Juan/G-LAB/ProjetoOS/Views/Home/Privacy.cshtml]
+[c:/Juan/G-LAB/ProjetoOS/Views/Home/Privacy.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxQcml2YWN5LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Juan/G-LAB/ProjetoOS/Views/Login/Index.cshtml]
+[c:/Juan/G-LAB/ProjetoOS/Views/Login/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTG9naW5cSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Juan/G-LAB/ProjetoOS/Views/OrdensServico/Abrir.cshtml]
+[c:/Juan/G-LAB/ProjetoOS/Views/OrdensServico/Abrir.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcT3JkZW5zU2Vydmljb1xBYnJpci5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Juan/G-LAB/ProjetoOS/Views/OrdensServico/Designar.cshtml]
+[c:/Juan/G-LAB/ProjetoOS/Views/OrdensServico/Designar.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcT3JkZW5zU2Vydmljb1xEZXNpZ25hci5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Juan/G-LAB/ProjetoOS/Views/OrdensServico/Detalhes.cshtml]
+[c:/Juan/G-LAB/ProjetoOS/Views/OrdensServico/Detalhes.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcT3JkZW5zU2Vydmljb1xEZXRhbGhlcy5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Juan/G-LAB/ProjetoOS/Views/OrdensServico/Index.cshtml]
+[c:/Juan/G-LAB/ProjetoOS/Views/OrdensServico/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcT3JkZW5zU2Vydmljb1xJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Juan/G-LAB/ProjetoOS/Views/Relatorios/Index.cshtml]
+[c:/Juan/G-LAB/ProjetoOS/Views/Relatorios/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUmVsYXRvcmlvc1xJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Juan/G-LAB/ProjetoOS/Views/Shared/Error.cshtml]
+[c:/Juan/G-LAB/ProjetoOS/Views/Shared/Error.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXEVycm9yLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Juan/G-LAB/ProjetoOS/Views/Shared/_OrdensLista.cshtml]
+[c:/Juan/G-LAB/ProjetoOS/Views/Shared/_OrdensLista.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9PcmRlbnNMaXN0YS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Juan/G-LAB/ProjetoOS/Views/Shared/_ValidationScriptsPartial.cshtml]
+[c:/Juan/G-LAB/ProjetoOS/Views/Shared/_ValidationScriptsPartial.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Juan/G-LAB/ProjetoOS/Views/_ViewImports.cshtml]
+[c:/Juan/G-LAB/ProjetoOS/Views/_ViewImports.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdJbXBvcnRzLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Juan/G-LAB/ProjetoOS/Views/_ViewStart.cshtml]
+[c:/Juan/G-LAB/ProjetoOS/Views/_ViewStart.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdTdGFydC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Juan/G-LAB/ProjetoOS/Views/Shared/_Layout.cshtml]
+[c:/Juan/G-LAB/ProjetoOS/Views/Shared/_Layout.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9MYXlvdXQuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = b-5qjdlmgi40
