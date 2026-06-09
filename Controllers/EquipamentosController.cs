@@ -99,21 +99,42 @@ public class EquipamentosController : BaseController
         if (login is not null) return Unauthorized();
         if (!IsAdmin) return Forbid();
 
-        var ordens = _db.OrdensServico
+        var ordens     = _db.OrdensServico
             .Include(o => o.Responsavel)
             .Where(o => o.EquipamentoId == id)
             .OrderByDescending(o => o.DataAbertura)
-            .Select(o => new
-            {
-                id = o.Id,
-                dataAbertura = o.DataAbertura.ToLocalTime().ToString("dd/MM/yyyy HH:mm"),
-                descricao = o.DescricaoProblema,
-                status = o.Status,
-                responsavel = o.Responsavel != null ? o.Responsavel.Nome : "Não designado"
-            })
             .ToList();
 
-        return Json(ordens);
+        var osIds     = ordens.Select(o => o.Id).ToList();
+        var registros = _db.RegistrosTempo.Where(r => osIds.Contains(r.OrdemServicoId)).ToList();
+        var emExecIds = ordens.Where(o => o.Status == "Em Execucao").Select(o => o.Id).ToHashSet();
+        var agora     = DateTime.UtcNow;
+
+        static string FmtTs(TimeSpan t) =>
+            t == TimeSpan.Zero ? "—" : $"{(int)t.TotalHours:00}h{t.Minutes:00}";
+
+        var resultado = ordens.Select(o =>
+        {
+            var tempo = registros.Where(r => r.OrdemServicoId == o.Id)
+                .Aggregate(TimeSpan.Zero, (acc, r) =>
+                {
+                    DateTime? f = r.Fim ?? (emExecIds.Contains(o.Id) ? agora : (DateTime?)null);
+                    if (f == null) return acc;
+                    var dur = f.Value - r.Inicio;
+                    return dur > TimeSpan.Zero ? acc + dur : acc;
+                });
+            return new
+            {
+                id              = o.Id,
+                dataAbertura    = o.DataAbertura.ToLocalTime().ToString("dd/MM/yyyy HH:mm"),
+                descricao       = o.DescricaoProblema,
+                status          = o.Status,
+                responsavel     = o.Responsavel != null ? o.Responsavel.Nome : "Não designado",
+                tempoTrabalhado = FmtTs(tempo)
+            };
+        }).ToList();
+
+        return Json(resultado);
     }
 
     public IActionResult BuscarSugestoesNI(string termo)

@@ -166,4 +166,88 @@ public class RelatoriosController : BaseController
 
         return View(ordens);
     }
+
+    public IActionResult ExportarCsv(DateTime? inicio, DateTime? fim, string? status, int? responsavelId, string? vinculo)
+    {
+        var login = ExigirLogin();
+        if (login is not null) return login;
+        if (!IsAdmin) return RedirectToAction("Index", "Home");
+
+        var hoje = DateTime.UtcNow;
+        if (!inicio.HasValue && !fim.HasValue && string.IsNullOrWhiteSpace(status)
+            && !responsavelId.HasValue && string.IsNullOrWhiteSpace(vinculo))
+        {
+            inicio = new DateTime(hoje.Year, hoje.Month, 1);
+            fim    = hoje.Date;
+        }
+
+        var query = _db.OrdensServico
+            .Include(o => o.Equipamento)
+            .Include(o => o.Responsavel)
+            .AsQueryable();
+
+        if (inicio.HasValue)
+        {
+            var inicioUtc = DateTime.SpecifyKind(inicio.Value.Date, DateTimeKind.Utc);
+            query = query.Where(o => o.DataAbertura >= inicioUtc);
+        }
+        if (fim.HasValue)
+        {
+            var fimUtc = DateTime.SpecifyKind(fim.Value.Date.AddDays(1), DateTimeKind.Utc);
+            query = query.Where(o => o.DataAbertura < fimUtc);
+        }
+        if (!string.IsNullOrWhiteSpace(status))  query = query.Where(o => o.Status == status);
+        if (responsavelId.HasValue)               query = query.Where(o => o.ResponsavelId == responsavelId);
+        if (!string.IsNullOrWhiteSpace(vinculo))  query = query.Where(o => o.Equipamento.Vinculo == vinculo);
+
+        var ordens    = query.OrderByDescending(o => o.DataAbertura).ToList();
+        var ids       = ordens.Select(o => o.Id).ToList();
+        var registros = _db.RegistrosTempo.Where(r => ids.Contains(r.OrdemServicoId)).ToList();
+        var emExecIds = ordens.Where(o => o.Status == "Em Execucao").Select(o => o.Id).ToHashSet();
+        var agora     = DateTime.UtcNow;
+
+        TimeSpan CalcTempo(int id) =>
+            registros.Where(r => r.OrdemServicoId == id)
+                .Aggregate(TimeSpan.Zero, (acc, r) =>
+                {
+                    DateTime? f = r.Fim ?? (emExecIds.Contains(id) ? agora : (DateTime?)null);
+                    if (f == null) return acc;
+                    var dur = f.Value - r.Inicio;
+                    return dur > TimeSpan.Zero ? acc + dur : acc;
+                });
+
+        static string FmtTs(TimeSpan t) => $"{(int)t.TotalHours:00}h{t.Minutes:00}";
+        static string Esc(string? s)
+        {
+            if (s is null) return "";
+            return s.Contains(';') || s.Contains('"') || s.Contains('\n')
+                ? $"\"{s.Replace("\"", "\"\"")}\"" : s;
+        }
+
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("OS;Equipamento;NI;Localizacao;Vinculo;Responsavel;Status;Abertura;Tempo Trabalhado");
+        foreach (var o in ordens)
+        {
+            sb.AppendLine(string.Join(";", new[]
+            {
+                Esc($"OS{o.Id:000000}"),
+                Esc(o.Equipamento.Nome),
+                Esc(o.Equipamento.NI ?? ""),
+                Esc(o.Equipamento.Localizacao ?? ""),
+                Esc(o.Equipamento.Vinculo ?? ""),
+                Esc(o.Responsavel?.Nome ?? "Não designado"),
+                Esc(o.Status),
+                Esc(o.DataAbertura.ToLocalTime().ToString("dd/MM/yyyy HH:mm")),
+                FmtTs(CalcTempo(o.Id))
+            }));
+        }
+
+        var nomeArquivo = $"relatorio_{inicio?.ToString("yyyyMMdd") ?? "inicio"}_{fim?.ToString("yyyyMMdd") ?? "fim"}.csv";
+        var bom   = System.Text.Encoding.UTF8.GetPreamble();
+        var corpo = System.Text.Encoding.UTF8.GetBytes(sb.ToString());
+        var bytes = new byte[bom.Length + corpo.Length];
+        bom.CopyTo(bytes, 0);
+        corpo.CopyTo(bytes, bom.Length);
+        return File(bytes, "text/csv; charset=utf-8", nomeArquivo);
+    }
 }
