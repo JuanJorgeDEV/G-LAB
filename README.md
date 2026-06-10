@@ -1,91 +1,57 @@
-# 🛠️ Triad Suport — G-Lab / SGMA-Web
+# 🧪 G-Lab — Sistema de Ordens de Serviço (OS)
 
-Uma aplicação moderna desenvolvida em **ASP.NET Core MVC** (.NET 10) para o gerenciamento ágil de Ordens de Serviço (OS) de equipamentos. Permite abrir chamados por Número de Inventário (NI) ou descrição avulsa, delegar responsabilidades, pausar trabalhos e monitorar o tempo líquido real de execução.
+Um sistema web moderno e intuitivo desenvolvido para gerenciar ordens de serviço de equipamentos em laboratórios e salas de aula de forma ágil e organizada.
 
----
-
-## 🏗️ Arquitetura do Projeto
-
-O projeto segue a arquitetura **Model-View-Controller (MVC)** clássica estruturada da seguinte forma:
-
-```mermaid
-graph TD
-    A[Navegador / Cliente] -->|Requisição HTTP| B(Program.cs)
-    B -->|Rotas MVC| C{Controllers}
-    C -->|Retorna HTML| D[Views Razor .cshtml]
-    C -->|Grava / Lê Dados| E[EF Core DbContext]
-    E -->|PostgreSQL / Supabase| F[(Banco de Dados)]
-```
-
-### Estrutura de Pastas
-*   📁 **`Controllers`**: Lógica de roteamento e regras de negócio.
-    *   `BaseController.cs`: Classe base abstrata que extrai informações de sessão (`UsuarioId`, `UsuarioNome`, `UsuarioPerfil`) e fornece o método utilitário de segurança `ExigirLogin()`.
-    *   `LoginController.cs`: Gerenciador de login, logout e memorização de login via cookies.
-    *   `OrdensServicoController.cs`: Abertura, listagem, filtragem e designação de técnicos.
-    *   `ExecucaoController.cs`: Lógica de transições de status da OS e medição do cronômetro.
-*   📁 **`Models`**: Modelagem de dados, DTOs e persistência.
-    *   `AppDbContext.cs`: Configuração e mapeamento de relacionamentos do Entity Framework Core.
-    *   `DbInitializer.cs`: Gerenciador de seed de dados automatizado em C# na inicialização do aplicativo.
-    *   `PasswordHelper.cs`: Mecanismo de hashing seguro de senhas com algoritmo **PBKDF2**.
-*   📁 **`Views`**: Templates de interface de usuário Razor (`.cshtml`).
-    *   `Views/Shared/_Layout.cshtml`: Layout principal global contendo barras laterais de navegação e cabeçalhos responsivos (mobile/desktop).
-*   📁 **`wwwroot`**: Recursos estáticos como imagens, scripts JavaScript, Bootstrap e estilos customizados (`site.css`).
+O projeto já está publicado e pronto para uso! Acesse aqui: **[G-Lab no Render](https://g-lab.onrender.com/)**
 
 ---
 
-## ⚡ Principais Funcionalidades
+## 🎯 Por que desenvolvemos?
+O **G-Lab** foi criado para resolver a necessidade de otimizar e organizar a manutenção e o suporte técnico de equipamentos em ambientes educacionais e laboratoriais. 
+Antes, o controle de chamados e a alocação de técnicos podiam ser manuais ou confusos. O G-Lab soluciona isso ao:
+* **Centralizar o suporte:** Mantém todas as ordens de serviço em um só lugar.
+* **Evitar duplicidade:** Impede a abertura de múltiplos chamados para o mesmo equipamento em manutenção.
+* **Equilibrar a carga de trabalho:** Mostra quantas tarefas ativas cada técnico possui antes de delegar um novo chamado.
+* **Controlar o foco técnico:** Limita a execução de no máximo uma tarefa ativa por vez por colaborador.
+* **Medir tempos reais:** Cronometra de forma líquida o tempo gasto em cada serviço, pausando automaticamente em períodos de espera.
 
-1.  **Autenticação e Sessão nativa:** login com controle de perfis (*Administrador* e *Colaborador*), cookies opcionais e expiração de sessão após 8 horas de inatividade.
-2.  **Gestão de Equipamentos:** Cadastro e edição de ativos com ou sem Número de Inventário (NI) único e histórico completo de ordens de serviço por equipamento no painel de administração.
-3.  **Abertura Inteligente de OS:** Permite ao usuário pesquisar NIs com sugestões automáticas via AJAX, prevenindo a abertura de ordens duplicadas em ativos que já possuem chamados em aberto.
-4.  **Atribuição com Carga de Trabalho:** Ao delegar um chamado, o painel exibe ao lado de cada técnico quantas ordens de serviço ele já possui em andamento ou pendentes.
-5.  **Limitação de Trabalho Concorrente (Regra de Execução):**
-    *   Cada técnico só pode possuir **no máximo uma** ordem no status **"Em Execução"** por vez.
-    *   Caso tente iniciar uma nova OS sem pausar ou concluir a atual, a ação é bloqueada com mensagem de erro.
-    *   Atribuições administrativas ou autoatribuições criadas sob essa condição são convertidas automaticamente para o status **"Pendente"** temporariamente.
-6.  **Cronômetro Preciso:** O tempo de trabalho calcula os períodos cumulativos em que a ordem esteve sob execução ativa, desconsiderando intervalos em que a OS esteve em status "Aguardando" (pausada).
+## 🛠️ O que foi feito?
+Implementamos as seguintes funcionalidades essenciais:
+1. **Controle de Acesso (Login):** Níveis de permissão distintos para Administradores (gestores) e Colaboradores (técnicos).
+2. **Cadastro e Histórico de Equipamentos:** Registro detalhado dos ativos com ou sem Número de Inventário (NI).
+3. **Abertura Inteligente de OS:** Autocompletar de equipamentos via busca rápida AJAX e alertas de chamados já abertos.
+4. **Gestão do Tempo de Trabalho:** Cronômetro preciso baseado nas transições de status da OS (iniciado, pausado, finalizado).
+5. **Painel de Atribuição:** Visualização clara da carga de tarefas pendentes de cada técnico.
 
----
-
-## 🔑 Credenciais de Teste
-
-Para realizar o login no painel de desenvolvimento, utilize as seguintes contas padrão:
-
-*   **Administrador Geral:** `geral@projeto.local` / senha: `123`
-*   **Administrador OPP:** `admin@projeto.local` / senha: `123`
-*   **Colaborador João:** `joao@projeto.local` / senha: `123`
-*   **Colaboradora Maria:** `maria@projeto.local` / senha: `123`
-
----
-
-## 🗄️ Inicialização e Seed do Banco de Dados
-
-A aplicação está configurada para conectar-se ao Supabase PostgreSQL através do arquivo `appsettings.Development.json` (ou banco em memória caso a connection string esteja vazia).
-
-### Carga Automática (C#)
-Se as tabelas do banco de dados estiverem vazias, o inicializador `DbInitializer.Seed()` preenche a base automaticamente no startup do servidor com:
-*   A base de usuários padrão.
-*   **8 salas de aula** (`610`, `615`, `603`, `604`, `601`, `602`, `605`, `612`) contendo **163 equipamentos cada** (40 computadores com NIs sequenciais — como os NIs `1248381` a `1248420` da Sala 610 —, 40 teclados, 40 monitores, 40 mouses sem NI, 2 ar-condicionados e 1 projetor).
-*   Um conjunto de 15 ordens de serviço realistas estruturadas em diferentes estados.
-
-### Carga Manual (SQL)
-Caso prefira redefinir o banco de dados completamente a partir do zero:
-1.  Copie o conteúdo do arquivo localizado em [seed-dados-demo.sql](file:///c:/Juan/G-LAB/ProjetoOS/scripts/seed-dados-demo.sql).
-2.  Cole-o no editor de consultas SQL do painel do **Supabase** e execute-o.
-3.  O script fará um truncate completo nas tabelas e recriará toda a estrutura de salas e chamados de demonstração.
+## 💻 Como desenvolvemos?
+A aplicação foi construída utilizando tecnologias modernas e eficientes de desenvolvimento web:
+* **Tecnologia Principal:** `ASP.NET Core MVC` (.NET 10), utilizando uma arquitetura limpa, escalável e de excelente desempenho.
+* **Persistência de Dados:** `Entity Framework Core` para comunicação ágil e mapeamento objeto-relacional.
+* **Banco de Dados:** `PostgreSQL` hospedado em nuvem (Supabase).
+* **Interface de Usuário:** `Razor Views` combinadas com `Bootstrap` e estilos customizados em CSS para um visual moderno e responsivo.
+* **Interatividade Dinâmica:** Consultas assíncronas via `AJAX` com JavaScript nativo para uma experiência ágil no navegador.
 
 ---
 
-## 🚀 Como Executar
+## 🚀 Como Executar Localmente
+Para executar este projeto na sua máquina de desenvolvimento, siga os passos abaixo:
 
-Certifique-se de possuir o **.NET SDK 10** instalado em sua máquina.
+### Pré-requisitos
+* Possuir o **.NET SDK 10** instalado.
 
-1.  Restaure as dependências do projeto:
-    ```bash
-    dotnet restore
-    ```
-2.  Inicie a aplicação localmente:
-    ```bash
-    dotnet run
-    ```
-3.  Abra o navegador no endereço indicado no terminal (por padrão: `http://localhost:5093`).
+### Passo a Passo
+1. Restaure as dependências do projeto:
+   ```bash
+   dotnet restore
+   ```
+2. Execute a aplicação:
+   ```bash
+   dotnet run
+   ```
+3. Acesse a aplicação no seu navegador no endereço que aparecer no terminal (geralmente `http://localhost:5093`).
+
+### 🔑 Credenciais para Teste Rápido
+* **Administrador Geral:** `geral@projeto.local` | Senha: `123`
+* **Administrador OPP:** `admin@projeto.local` | Senha: `123`
+* **Colaborador João:** `joao@projeto.local` | Senha: `123`
+* **Colaboradora Maria:** `maria@projeto.local` | Senha: `123`
