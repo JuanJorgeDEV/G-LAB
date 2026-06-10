@@ -841,10 +841,17 @@ body {
   }
 
 .mobile-topbar {
-  display: block;
+    display: block;
     background: #0a2540;
     padding: 1rem;
     color: #fff;
+  }
+
+.mobile-topbar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
   }
 
 .mobile-brand {
@@ -863,9 +870,22 @@ body {
   }
 
   .navbar-toggler {
-    float: right;
-    border-color: rgba(255, 255, 255, .45);
-    filter: invert(1);
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, .25);
+    padding: 0.35rem 0.55rem;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    display: grid;
+    place-items: center;
+  }
+
+  .navbar-toggler:hover,
+  .navbar-toggler:focus {
+    background: rgba(255, 255, 255, .1);
+    border-color: rgba(255, 255, 255, .55);
+    outline: none;
   }
 
   .mobile-nav {

@@ -128,11 +128,12 @@
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
-            <div class="modal-body p-0" id="modalHistoricoCorpo">
+            <div class="modal-body p-0">
                 <div class="d-flex align-items-center justify-content-center gap-2 p-4 text-muted" id="modalHistoricoLoading">
                     <div class="spinner-border spinner-border-sm" role="status"></div>
                     Carregando histórico...
                 </div>
+                <div id="modalHistoricoCorpo"></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary btn-sm" id="btnExportarHistorico" style="display:none" onclick="exportarHistoricoCSV()">
@@ -177,7 +178,6 @@
         var corpo    = document.getElementById('modalHistoricoCorpo');
         var loading  = document.getElementById('modalHistoricoLoading');
         corpo.innerHTML = '';
-        corpo.appendChild(loading);
         loading.style.display = 'flex';
 
         fetch('/Equipamentos/HistoricoOS?id=' + equipId)

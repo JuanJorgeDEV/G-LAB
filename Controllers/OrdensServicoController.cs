@@ -154,6 +154,8 @@ public class OrdensServicoController : BaseController
             _db.Equipamentos.Add(equipamento);
         }
 
+        bool jaTemEmExecucao = euMesmoVouExecutar && _db.OrdensServico.Any(o => o.ResponsavelId == UsuarioId && o.Status == "Em Execucao");
+
         var ordem = new OrdemServico
         {
             Equipamento = equipamento,
@@ -161,13 +163,13 @@ public class OrdensServicoController : BaseController
             ResponsavelId = euMesmoVouExecutar ? UsuarioId : null,
             TipoProblema = tipoProblema,
             DescricaoProblema = descricaoProblema,
-            Status = euMesmoVouExecutar ? "Em Execucao" : "Pendente"
+            Status = (euMesmoVouExecutar && !jaTemEmExecucao) ? "Em Execucao" : "Pendente"
         };
 
         _db.OrdensServico.Add(ordem);
         _db.SaveChanges();
 
-        if (euMesmoVouExecutar)
+        if (euMesmoVouExecutar && !jaTemEmExecucao)
         {
             _db.RegistrosTempo.Add(new RegistroTempo
             {
@@ -178,11 +180,21 @@ public class OrdensServicoController : BaseController
             _db.SaveChanges();
         }
 
-        RegistrarHistorico(ordem.Id, euMesmoVouExecutar ? "Execucao iniciada pelo solicitante" : "OS enviada para OPP");
+        RegistrarHistorico(ordem.Id, (euMesmoVouExecutar && !jaTemEmExecucao) 
+            ? "Execucao iniciada pelo solicitante" 
+            : euMesmoVouExecutar 
+                ? "OS criada como Pendente (tecnico ja possui OS em execucao)" 
+                : "OS enviada para OPP");
 
-        if (euMesmoVouExecutar)
+        if (euMesmoVouExecutar && !jaTemEmExecucao)
         {
             return RedirectToAction("Detalhes", "Execucao", new { id = ordem.Id });
+        }
+
+        if (euMesmoVouExecutar && jaTemEmExecucao)
+        {
+            TempData["Mensagem"] = "Ordem de serviço criada. Como você já possui uma ordem em execução, esta nova ordem permaneceu com status Pendente.";
+            return RedirectToAction("Index", "Home");
         }
 
         TempData["Mensagem"] = "Solicitacao enviada para a OPP. Voce pode acompanhar o andamento na tela inicial.";
@@ -222,7 +234,28 @@ public class OrdensServicoController : BaseController
         var ordem = _db.OrdensServico.Include(o => o.Equipamento).FirstOrDefault(o => o.Id == id);
         if (ordem is null) return NotFound();
 
-        ViewBag.Usuarios = _db.Usuarios.OrderBy(u => u.Nome).ToList();
+        var usuarios = _db.Usuarios.OrderBy(u => u.Nome).ToList();
+
+        var statusCounts = _db.OrdensServico
+            .Where(o => o.ResponsavelId != null && o.Status != "Concluida")
+            .GroupBy(o => new { o.ResponsavelId, o.Status })
+            .Select(g => new { 
+                ResponsavelId = g.Key.ResponsavelId!.Value, 
+                Status = g.Key.Status, 
+                Count = g.Count() 
+            })
+            .ToList();
+
+        var userCounts = usuarios.ToDictionary(
+            u => u.Id,
+            u => (
+                EmExecucao: statusCounts.Where(c => c.ResponsavelId == u.Id && c.Status == "Em Execucao").Sum(c => c.Count),
+                Pendente: statusCounts.Where(c => c.ResponsavelId == u.Id && (c.Status == "Pendente" || c.Status == "Aguardando")).Sum(c => c.Count)
+            )
+        );
+
+        ViewBag.Usuarios = usuarios;
+        ViewBag.UserCounts = userCounts;
         return View(ordem);
     }
 
@@ -236,12 +269,25 @@ public class OrdensServicoController : BaseController
         var ordem = _db.OrdensServico.Find(id);
         if (ordem is null) return NotFound();
 
-        ordem.ResponsavelId = responsavelId;
-        ordem.Status = "Em Execucao";
-        _db.SaveChanges();
-        RegistrarHistorico(ordem.Id, "Responsavel designado");
+        bool jaTemEmExecucao = _db.OrdensServico.Any(o => o.ResponsavelId == responsavelId && o.Status == "Em Execucao" && o.Id != id);
 
-        TempData["Mensagem"] = "Responsavel designado com sucesso.";
+        ordem.ResponsavelId = responsavelId;
+        if (jaTemEmExecucao)
+        {
+            ordem.Status = "Pendente";
+            TempData["Mensagem"] = "Responsável designado com sucesso. Como o técnico já possui uma ordem de serviço em execução, esta ordem permaneceu como Pendente.";
+        }
+        else
+        {
+            ordem.Status = "Em Execucao";
+            TempData["Mensagem"] = "Responsável designado com sucesso.";
+        }
+
+        _db.SaveChanges();
+        RegistrarHistorico(ordem.Id, jaTemEmExecucao 
+            ? "Responsavel designado (OS pendente por excesso de execucoes)" 
+            : "Responsavel designado");
+
         return RedirectToAction("Index");
     }
 

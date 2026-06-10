@@ -188,4 +188,4 @@ C:\Juan\G-LAB\ProjetoOS\bin\Debug\net10.0\zh-Hans\Microsoft.CodeAnalysis.Workspa
 C:\Juan\G-LAB\ProjetoOS\bin\Debug\net10.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
 C:\Juan\G-LAB\ProjetoOS\obj\Debug\net10.0\ProjetoOS.sourcelink.json
 C:\Juan\G-LAB\ProjetoOS\bin\Debug\net10.0\appsettings.Development.example.json
-c:\Juan\G-LAB\ProjetoOS\obj\Debug\net10.0\compressed\riutp9zxuf-{0}-kdgm4agqc9-kdgm4agqc9.gz
+C:\Juan\G-LAB\ProjetoOS\obj\Debug\net10.0\compressed\riutp9zxuf-{0}-23fxi279jf-23fxi279jf.gz

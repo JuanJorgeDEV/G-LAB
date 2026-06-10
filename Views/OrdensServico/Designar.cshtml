@@ -17,13 +17,19 @@
     <div class="text-muted">@Model.Equipamento.Localizacao</div>
 </div>
 
+@{
+    var userCounts = ViewBag.UserCounts as Dictionary<int, (int EmExecucao, int Pendente)>;
+}
 <form asp-action="SalvarDesignacao" method="post" class="form-surface">
     <input type="hidden" name="id" value="@Model.Id" />
     <label class="form-label">Escolha o responsavel</label>
     <select class="form-select form-select-lg" name="responsavelId" required>
         @foreach (var usuario in usuarios)
         {
-            <option value="@usuario.Id">@usuario.Nome (@usuario.Perfil)</option>
+            var countInfo = userCounts != null && userCounts.TryGetValue(usuario.Id, out var c) ? c : (EmExecucao: 0, Pendente: 0);
+            <option value="@usuario.Id">
+                @usuario.Nome (@usuario.Perfil) — [@countInfo.EmExecucao em execução, @countInfo.Pendente pendente/aguardando]
+            </option>
         }
     </select>
     <div class="d-flex flex-column flex-md-row gap-2 mt-4">

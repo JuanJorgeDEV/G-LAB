@@ -89,6 +89,13 @@ public class ExecucaoController : BaseController
         if (ordem is null) return NotFound();
         if (!PodeExecutar(ordem)) return RedirectToAction("Index", "Home");
 
+        bool jaTemEmExecucao = _db.OrdensServico.Any(o => o.ResponsavelId == UsuarioId && o.Status == "Em Execucao" && o.Id != id);
+        if (jaTemEmExecucao)
+        {
+            TempData["Erro"] = "Não é possível iniciar esta ordem pois você já possui outra ordem de serviço em execução. Pause ou conclua a ordem atual primeiro.";
+            return RedirectToAction("Detalhes", new { id });
+        }
+
         // Garante que não há registro aberto duplicado antes de criar um novo
         if (!_db.RegistrosTempo.Any(r => r.OrdemServicoId == id && r.Fim == null))
         {

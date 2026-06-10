@@ -73,13 +73,19 @@
 
             <div class="app-content">
                 <header class="mobile-topbar">
-                    <a class="mobile-brand" asp-controller="Home" asp-action="Index">
-                        <img src="/images/logoSenai.png" alt="SENAI" />
-                        <span>Triad Suport</span>
-                    </a>
-                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mobileNav" aria-controls="mobileNav" aria-expanded="false" aria-label="Menu">
-                        <span class="navbar-toggler-icon"></span>
-                    </button>
+                    <div class="mobile-topbar-header">
+                        <a class="mobile-brand" asp-controller="Home" asp-action="Index">
+                            <img src="/images/logoSenai.png" alt="SENAI" />
+                            <span>Triad Suport</span>
+                        </a>
+                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mobileNav" aria-controls="mobileNav" aria-expanded="false" aria-label="Menu">
+                            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="3" y1="12" x2="21" y2="12"></line>
+                                <line x1="3" y1="6" x2="21" y2="6"></line>
+                                <line x1="3" y1="18" x2="21" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
                     <nav class="collapse mobile-nav" id="mobileNav">
                         <a asp-controller="Home" asp-action="Index">
                             <svg class="mobile-nav-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
